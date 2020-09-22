@@ -70,17 +70,17 @@ reactions <- list(infectS=list(paste0("rate = psi * phi * 1 / Nthis * beta * ((I
                  exitIsd1=list("rate = Isd1 * gammaIsd * s;", c(Isd1=-1, Isd2=1)),
                  exitIsd2=list("rate = Isd2 * gammaIsd * s;", c(Isd2=-1, Isd3=1)),
                  exitIsd3=list("rate = Isd3 * gammaIsd * s;", c(Isd3=-1, Isd4=1)),
-                 exitIsd4=list("rate = Isd4 * gammaIsd * s;", c(Isd4=-1, C1=1)),
+                 exitIsd4=list("rate = Isd4 * gammaIsd * s;", c(Isd4=-1, C1=1, C_new = 1)),
                  exitC1=list("rate = C1 * gammaC / s;", c(C1=-1, C2=1)),
                  exitC2=list("rate = C2 * gammaC / s;", c(C2=-1, C3=1)),
                  exitC3=list("rate = C3 * gammaC / s;", c(C3=-1, C4=1)),
                  exitC4enterR=list("rate = C4 * gammaC / s * (1 - h);", c(C4=-1, R=1)),
-                 exitC4enterH=list("rate = C4 * gammaC / s * h;", c(C4=-1, H1=1)),
+                 exitC4enterH=list("rate = C4 * gammaC / s * h;", c(C4=-1, H1=1, H_new = 1)),
                  exitH1=list("rate = H1 * gammaH;", c(H1 = -1, H2 = 1)),
                  exitH2=list("rate = H2 * gammaH;", c(H2 = -1, H3 = 1)),
                  exitH3=list("rate = H3 * gammaH;", c(H3 = -1, H4 = 1)),
                  exitH4enterR=list("rate = H4 * gammaH * (1 - m);", c(H4 = -1, R=1)),
-                 exitH4enterD=list("rate = H4 * gammaH * m;", c(H4 = -1, D=1)))
+                 exitH4enterD=list("rate = H4 * gammaH * m;", c(H4 = -1, D=1, D_new = 1)))
 
 sir_rproc <- do.call(pomp::gillespie_hl, reactions)
 
