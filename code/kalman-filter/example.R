@@ -46,7 +46,7 @@ out <- pomp::simulate(pomp_model, times = 1:30)
 
 sd <- as.data.frame(out)
 
-reactions <- list(infectS=list(paste0("rate = beta * ((Isd1 + Isd2 + Isd3 + Isd4)",
+reactions <- list(infectS=list(paste0("rate = exp(log_beta_s) * ((Isd1 + Isd2 + Isd3 + Isd4)",
                                      " + (Isu1 + Isu2 + Isu3 + Isu4)",
                                      " + (Isd1 + Isd2 + Isd3 + Isd4)",
                                      " + 1/(1 + exp(trans_e)) * (E1 + E2 + E3 + E4)",
@@ -127,8 +127,20 @@ Aformulas <- sapply(as.character(A), function(x) parse(text = x))
 
 eval_vf_and_jac <- function(xhat, params, N, frates, Aformulas){
   aparams <- as.list(c(xhat, params))
+  
+  diag_speedup <- with(aparams, 1 + exp(log_max_diag)  *  (t ^ exp(log_diag_inc_rate)) / (exp(log_half_diag) ^ exp(log_diag_inc_rate))  + 
+                         (t ^ exp(log_diag_inc_rate)))
+  g_sd <- with(aparams, diag_speedup * exp(log_g_sd))  ## shortened time in symptomatic stage prior to diagnosis
+  g_c  <- with(aparams, exp(log_g_c) / diag_speedup) ## increased time in symptomatic stage post diagnosis
+  detect_frac <- with(aparams, 1 / (1+exp(max_detect_par)) * (t ^ exp(log_detect_inc_rate))  / ( (exp(log_half_detect) ^ exp(log_detect_inc_rate)) + (t ^ exp(log_detect_inc_rate))) + 
+                        exp(base_detect_frac))
+  frac_dead <- with(aparams,  1/(1+exp(min_frac_dead)) + (1/(1+exp(max_frac_dead)) - 1/(1+exp(min_frac_dead)) ) * (1 - t/(t+exp(log_half_dead)) ))
+  
+  
+  
+  aparams2 <- c(list(g_sd = g_sd, g_c = g_c, detect_frac = detect_frac), aparams)
   tmpf <- function(x){
-    ret <- with(aparams, eval(x))
+    ret <- with(aparams2, eval(x))
     if(is.null(ret)){
       ret <- 0
     }
