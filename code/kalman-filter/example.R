@@ -124,9 +124,11 @@ for (i in seq(1, N)){
   }
 }
 Aformulas <- sapply(as.character(A), function(x) parse(text = x))
+vf_formulas <- sapply(rhs, function(x) parse(text = x))
 
-eval_vf_and_jac <- function(xhat, params, N, frates, Aformulas){
-  aparams <- as.list(c(xhat, params))
+
+eval_vf_and_jac <- function(xhat, params, time, N, vf_expressions, Aformulas){
+  aparams <- as.list(c(xhat, t = time, params))
   
   diag_speedup <- with(aparams, 1 + exp(log_max_diag)  *  (t ^ exp(log_diag_inc_rate)) / (exp(log_half_diag) ^ exp(log_diag_inc_rate))  + 
                          (t ^ exp(log_diag_inc_rate)))
@@ -147,8 +149,12 @@ eval_vf_and_jac <- function(xhat, params, N, frates, Aformulas){
     ret
   }
   Avals <- sapply(Aformulas, function(x) tmpf(x))
-  vf <- sapply(frates, function(x) tmpf(x))
+  vf <- sapply(vf_expressions, function(x) tmpf(x))
   list(vectorfield = vf,
        Jacobian = matrix(Avals, nrow = N, ncol = N))
 }
 
+xhat0 <- c(S_0 = 1e6, E1=0, E2=0, E3=0, E4=0, Ia1=0, Ia1=0, Ia2=0, Ia3=0, Ia4=0, Isu1=0, Isu2=0, Isu3=0, Isu4=0, 
+           Isd1=1, Isd2=0, Isd3=0, Isd4=0, C1=0, C2=0, C3=0, C4=0, H1=0, H2=0, H3=0, H4=0, R=0, D=0)
+
+mvals <- eval_vf_and_jac(xhat = xhat0, params = par_var_list$allparvals, N = N, vf_expressions = vf_formulas, Aformulas = Aformulas, time = 2)
