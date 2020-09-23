@@ -102,6 +102,9 @@ rhs <- apply(stoich, 1, macrorate)
 lhs <- paste0("D", names(rhs))
 
 frates <- sapply(rates, function(x) parse(text = x))
+
+
+
 R <- length(rates)
 N <- nrow(stoich)
 statenms <- rownames(stoich)
@@ -127,7 +130,7 @@ Aformulas <- sapply(as.character(A), function(x) parse(text = x))
 vf_formulas <- sapply(rhs, function(x) parse(text = x))
 
 
-eval_vf_and_jac <- function(xhat, params, time, N, vf_expressions, Aformulas){
+eval_model <- function(xhat, params, time, N, vf_expressions, Aformulas, stoich, frates){
   aparams <- as.list(c(xhat, t = time, params))
   
   diag_speedup <- with(aparams, 1 + exp(log_max_diag)  *  (t ^ exp(log_diag_inc_rate)) / (exp(log_half_diag) ^ exp(log_diag_inc_rate))  + 
@@ -138,7 +141,8 @@ eval_vf_and_jac <- function(xhat, params, time, N, vf_expressions, Aformulas){
                         exp(base_detect_frac))
   frac_dead <- with(aparams,  1/(1+exp(min_frac_dead)) + (1/(1+exp(max_frac_dead)) - 1/(1+exp(min_frac_dead)) ) * (1 - t/(t+exp(log_half_dead)) ))
   
-  
+  fvals <- sapply(frates, function(x) with(aparams, eval(x)))
+  B <- stoich %*% diag(fvals) %*% t(stoich)
   
   aparams2 <- c(list(g_sd = g_sd, g_c = g_c, detect_frac = detect_frac), aparams)
   tmpf <- function(x){
@@ -151,10 +155,119 @@ eval_vf_and_jac <- function(xhat, params, time, N, vf_expressions, Aformulas){
   Avals <- sapply(Aformulas, function(x) tmpf(x))
   vf <- sapply(vf_expressions, function(x) tmpf(x))
   list(vectorfield = vf,
-       Jacobian = matrix(Avals, nrow = N, ncol = N))
+       Jacobian = matrix(Avals, nrow = N, ncol = N),
+       B = B)
 }
 
-xhat0 <- c(S_0 = 1e6, E1=0, E2=0, E3=0, E4=0, Ia1=0, Ia1=0, Ia2=0, Ia3=0, Ia4=0, Isu1=0, Isu2=0, Isu3=0, Isu4=0, 
-           Isd1=1, Isd2=0, Isd3=0, Isd4=0, C1=0, C2=0, C3=0, C4=0, H1=0, H2=0, H3=0, H4=0, R=0, D=0)
+xhat0 <- numeric(length(statenms))
+names(xhat0) <- statenms
+xhat0["S"] <- 1e6
+xhat0["Isd1"] <- 1e2
 
-mvals <- eval_vf_and_jac(xhat = xhat0, params = par_var_list$allparvals, N = N, vf_expressions = vf_formulas, Aformulas = Aformulas, time = 2)
+stoichn <- stoich
+mode(stoichn) <- "numeric"
+mvals <- eval_model(xhat = xhat0, params = par_var_list$allparvals, N = N, vf_expressions = vf_formulas, Aformulas = Aformulas, time = 2,
+                    frates = frates, stoich = stoichn)
+
+iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  stoich, frates, dt){
+  
+  mvals <- eval_model(xhat = xhat, params = params, N = N, vf_expressions = vf, Aformulas = jac, time = time,
+                      frates = frates, stoich = stoich)
+  
+  eig <- eigen(mvals$Jacobian)
+  W <- eig$vectors 
+  Winv <- solve(eig$vectors)
+  M <- W %*% diag(exp(eig$values * dt)) %*% Winv
+  
+  xhat_next <- mvals$vectorfield * dt + xhat
+  
+  Btilde <- Winv %*% mvals$B %*% t(Winv)
+  E <- function(gamma, t){
+    if(gamma == 0) return(t)
+    exp(gamma * t) / gamma - 1 / gamma
+  }
+  coef <- outer(eig$values, eig$values, "+")
+  Sigma_tilde <- matrix(NA, nrow = N, ncol = N)
+  for(i in seq_len(N)) {
+    for(j in seq_len(N)) {
+      Sigma_tilde[i, j] <- Btilde[i, j] * E(coef[i, j], dt)
+    }
+  }
+  P_next <- W %*% Sigma_tilde %*% t(W) * sqrt(pop.size) + M %*% P %*% t(M)
+  list(xhat = xhat_next, P = P_next)
+}
+
+P0 <- diag(N)
+xP <- iterate_f_and_P(xhat = xhat0, P = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
+                         jac = Aformulas, time = 2, frates = frates, stoich = stoichn, dt = 1 / 52)
+
+
+
+kfnll <-
+  function(z,
+           beta = 30,
+           rho = 0.1,
+           gamma = 24,
+           dt = 1 / 52,
+           xhat0 = c(0, 0),
+           Phat0 = rbind(c(1, 0), 
+                         c(0, 0)),
+           just_nll = FALSE) {
+    
+    z_1 <- z[1]
+    H <- matrix(c(0, rho), ncol = 2)
+    
+    # Predict
+    xP <- iterate_f_and_P_lin(xhat0, Phat0, beta = beta, gamma = gamma)
+    xhat_1_0 <- xP$xhat
+    PP_1_0 <- xP$P
+    # Update
+    
+    K_1 <- P_1_0 %*% t(H) %*% solve(H %*% P_1_0 %*% t(H) + R[1])
+    ytilde_1 <- z_1 - H %*% xhat_1_0
+    xhat_1_1 <- xhat_1_0 + K_1 %*% ytilde_1
+    P_1_1 <- (diag(2) - K_1 %*% H) %*% P_1_0
+    
+    T <- length(z)
+    ytilde_kk <- ytilde_k <- S <- array(NA_real_, dim = c(1, T))
+    K <- xhat_kk <- xhat_kkmo <- array(NA_real_, dim = c(2, T))
+    P_kk <- P_kkmo <- array(NA_real_, dim = c(2, 2, T))
+    
+    K[, 1] <- K_1
+    xhat_kkmo[, 1] <- xhat_1_0
+    xhat_kk[, 1] <- xhat_1_1
+    P_kk[, , 1] <- P_1_1
+    P_kkmo[, , 1] <- P_1_0
+    Rc <- xhat_kkmo[2, 1] * rho * (1 - rho)
+    if(Rc < 1){
+      Rc <- 1
+    }
+    S[, 1] <- H %*% P_kkmo[, , 1] %*% t(H) + Rc
+    ytilde_kk[, 1] <- z[1] - H %*% xhat_kk[, 1]
+    ytilde_k[, 1] <- ytilde_1
+    
+    for (i in seq(2, T)){
+      xP <- iterate_f_and_P_lin(xhat_kk[, i - 1], P_kk[, , i - 1], beta = beta, gamma = gamma)
+      xhat_kkmo[, i] <- xP$xhat
+      P_kkmo[, , i] <- xP$Phat
+      Rc <- xhat_kkmo[2, i] * rho * (1 - rho)
+      if(Rc < 1){
+        Rc <- 1
+      }
+      S[, i] <- H %*% P_kkmo[, , i] %*% t(H) + Rc
+      K[, i] <- P_kkmo[, , i] %*% t(H) %*% solve(S[, i])
+      ytilde_k[, i] <- z[i] - H %*% xhat_kkmo[, i, drop = FALSE]
+      xhat_kk[, i] <- xhat_kkmo[, i, drop = FALSE] + K[, i, drop = FALSE] %*% ytilde_k[, i, drop = FALSE]
+      P_kk[, , i] <- (1 - K[, i, drop = FALSE] %*% H) %*% P_kkmo[, , i]
+      ytilde_kk[i] <- z[i] - H %*% xhat_kk[, i, drop = FALSE]
+    }
+    
+    nll <- 0.5 * sum(ytilde_k ^ 2 / S + log(S) + log(2 * pi))
+    if (!just_nll){
+      list(nll = nll, xhat_kk = xhat_kk, P_kk = P_kk, ytilde_k = ytilde_k)
+    } else {
+      nll
+    }
+    
+  }
+
