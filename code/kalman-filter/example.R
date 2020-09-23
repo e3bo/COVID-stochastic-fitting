@@ -46,7 +46,7 @@ out <- pomp::simulate(pomp_model, times = 1:30)
 
 sd <- as.data.frame(out)
 
-reactions <- list(infectS=list(paste0("rate = exp(log_beta_s) * ((Isd1 + Isd2 + Isd3 + Isd4)",
+reactions <- list(infectS=list(paste0("rate = S * exp(log_beta_s) * ((Isd1 + Isd2 + Isd3 + Isd4)",
                                      " + (Isu1 + Isu2 + Isu3 + Isu4)",
                                      " + (Isd1 + Isd2 + Isd3 + Isd4)",
                                      " + 1/(1 + exp(trans_e)) * (E1 + E2 + E3 + E4)",
