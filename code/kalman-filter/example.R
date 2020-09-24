@@ -41,8 +41,9 @@ pomp_model <- makepompmodel(par_var_list = par_var_list,
                             pomp_covar = pomp_covar,
                             n_knots = n_knots)
 
+par_var_list$allparvals["log_beta_s"] <- -11
 coef(pomp_model) <- par_var_list$allparvals
-out <- pomp::simulate(pomp_model, times = 1:30)
+out <- pomp::simulate(pomp_model, times = 1:12)
 
 sd <- as.data.frame(out)
 
@@ -162,7 +163,7 @@ eval_model <- function(xhat, params, time, N, vf_expressions, Aformulas, stoich,
 xhat0 <- numeric(length(statenms))
 names(xhat0) <- statenms
 xhat0["S"] <- 1e6
-xhat0["Isd1"] <- 1e2
+xhat0["Isd1"] <- 1
 
 stoichn <- stoich
 mode(stoichn) <- "numeric"
@@ -176,7 +177,6 @@ iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  
 
       xhat <- x[inds]
       P <- matrix(x[-inds], nrow = N, ncol = N)
-      Q <- mvals$B
       mvals <- eval_model(xhat = xhat, params = parms, N = N, vf_expressions = vf, Aformulas = jac, time = t,
                           frates = frates, stoich = stoich)
       dxhat <-  mvals$vectorfield
@@ -192,68 +192,74 @@ iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  
 }
 
 P0 <- diag(N)
+P0[20] <- 0
 xP <- iterate_f_and_P(xhat = xhat0, P = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
-                         jac = Aformulas, time = 2, frates = frates, stoich = stoichn, dt = 1 / 52)
-
-
+                         jac = Aformulas, time = 2, frates = frates, stoich = stoichn, dt = 1)
 
 kfnll <-
-  function(z,
-           beta = 30,
-           rho = 0.1,
-           gamma = 24,
-           dt = 1 / 52,
-           xhat0 = c(0, 0),
-           Phat0 = rbind(c(1, 0), 
-                         c(0, 0)),
+  function(data,
+           params, 
+           dt = 1,
+           N, 
+           vf,
+           jac,
+           frates,
+           stoich,
+           xhat0,
+           P0,
+           obsvars = 20,
+           R = 1, 
            just_nll = FALSE) {
     
-    z_1 <- z[1]
-    H <- matrix(c(0, rho), ncol = 2)
+    H <- matrix(0, nrow = 1, ncol = N)
+    H[1, obsvars] <- 1
     
     # Predict
-    xP <- iterate_f_and_P_lin(xhat0, Phat0, beta = beta, gamma = gamma)
+    xP <- iterate_f_and_P(xhat = xhat0, P = P0, params = params, N = N, vf = vf, 
+                          jac = jac, frates = frates, stoich = stoich, 
+                          time = data$time[1] - dt, dt = dt)
     xhat_1_0 <- xP$xhat
-    PP_1_0 <- xP$P
+    P_1_0 <- xP$P
     # Update
     
-    K_1 <- P_1_0 %*% t(H) %*% solve(H %*% P_1_0 %*% t(H) + R[1])
-    ytilde_1 <- z_1 - H %*% xhat_1_0
+    K_1 <- P_1_0 %*% t(H) %*% solve(H %*% P_1_0 %*% t(H) + R)
+    ytilde_1 <- data$cases[1] - H %*% xhat_1_0
     xhat_1_1 <- xhat_1_0 + K_1 %*% ytilde_1
-    P_1_1 <- (diag(2) - K_1 %*% H) %*% P_1_0
+    P_1_1 <- (diag(N) - K_1 %*% H) %*% P_1_0
     
-    T <- length(z)
-    ytilde_kk <- ytilde_k <- S <- array(NA_real_, dim = c(1, T))
-    K <- xhat_kk <- xhat_kkmo <- array(NA_real_, dim = c(2, T))
-    P_kk <- P_kkmo <- array(NA_real_, dim = c(2, 2, T))
+    T <- nrow(data)
+    nobsv <- length(obsvars)
+    ytilde_kk <- ytilde_k <- S <- array(NA_real_, dim = c(nobsv, T))
+    K <- xhat_kk <- xhat_kkmo <- array(NA_real_, dim = c(N, T))
+    rownames(xhat_kk) <- names(xhat0)
+    P_kk <- P_kkmo <- array(NA_real_, dim = c(N, N, T))
     
     K[, 1] <- K_1
     xhat_kkmo[, 1] <- xhat_1_0
     xhat_kk[, 1] <- xhat_1_1
     P_kk[, , 1] <- P_1_1
     P_kkmo[, , 1] <- P_1_0
-    Rc <- xhat_kkmo[2, 1] * rho * (1 - rho)
-    if(Rc < 1){
-      Rc <- 1
-    }
-    S[, 1] <- H %*% P_kkmo[, , 1] %*% t(H) + Rc
-    ytilde_kk[, 1] <- z[1] - H %*% xhat_kk[, 1]
+    S[, 1] <- H %*% P_kkmo[, , 1] %*% t(H) + R
+    ytilde_kk[, 1] <- data$cases[1] - H %*% xhat_kk[, 1]
     ytilde_k[, 1] <- ytilde_1
     
     for (i in seq(2, T)){
-      xP <- iterate_f_and_P_lin(xhat_kk[, i - 1], P_kk[, , i - 1], beta = beta, gamma = gamma)
+      xhat <- xhat_kk[, i - 1]
+      xhat[obsvars] <- 0
+      P <- P_kk[,, i - 1]
+      P[obsvars, ] <- 0
+      P[, obsvars] <- 0
+      xP <- iterate_f_and_P(xhat, P, params = params, N = N, vf = vf, 
+                            jac = jac, frates = frates, stoich = stoich, 
+                            time = data$time[i - 1], dt = data$time[i]  - data$time[i - 1])
       xhat_kkmo[, i] <- xP$xhat
-      P_kkmo[, , i] <- xP$Phat
-      Rc <- xhat_kkmo[2, i] * rho * (1 - rho)
-      if(Rc < 1){
-        Rc <- 1
-      }
-      S[, i] <- H %*% P_kkmo[, , i] %*% t(H) + Rc
+      P_kkmo[, , i] <- xP$P
+      S[, i] <- H %*% P_kkmo[, , i] %*% t(H) + R
       K[, i] <- P_kkmo[, , i] %*% t(H) %*% solve(S[, i])
-      ytilde_k[, i] <- z[i] - H %*% xhat_kkmo[, i, drop = FALSE]
+      ytilde_k[, i] <- data$cases[i] - H %*% xhat_kkmo[, i, drop = FALSE]
       xhat_kk[, i] <- xhat_kkmo[, i, drop = FALSE] + K[, i, drop = FALSE] %*% ytilde_k[, i, drop = FALSE]
-      P_kk[, , i] <- (1 - K[, i, drop = FALSE] %*% H) %*% P_kkmo[, , i]
-      ytilde_kk[i] <- z[i] - H %*% xhat_kk[, i, drop = FALSE]
+      P_kk[, , i] <- (diag(N) - K[, i, drop = FALSE] %*% H) %*% P_kkmo[, , i]
+      ytilde_kk[i] <- data$cases[i] - H %*% xhat_kk[, i, drop = FALSE]
     }
     
     nll <- 0.5 * sum(ytilde_k ^ 2 / S + log(S) + log(2 * pi))
@@ -264,4 +270,7 @@ kfnll <-
     }
     
   }
+
+kfo <- kfnll(data = sd, xhat = xhat0, P0 = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
+                      jac = Aformulas, frates = frates, stoich = stoichn, dt = 1)
 
