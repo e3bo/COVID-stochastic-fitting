@@ -278,3 +278,17 @@ kfo <- kfnll(data = sd[-1, ], xhat = xhat0, P0 = P0, params = par_var_list$allpa
 plot(sd$time[-1], kfo$xhat_kk["E1",], xlab = "Time", ylab = "First latent compartment", type = 'l')
 points(sd$time[-1], sd$E1[-1], col = "blue")
 legend("topright", pch = c(1, NA), lty = c(NA, 1), col = c("blue", 1), legend = c("Simulation (Truth)", "Kalman filter based on cases"))
+
+nll_wrap <- function(logbeta){
+  params <- par_var_list$allparvals
+  params["log_beta_s"] <- logbeta
+  res <- kfnll(data = sd[-1, ], xhat = xhat0, P0 = P0, params = params, N = N, vf = vf_formulas, 
+        jac = Aformulas, frates = frates, stoich = stoichn, dt = 1, just_nll = TRUE)
+  print(paste("logbeta = ", logbeta, ",  nll = ", res, ", time = ", Sys.time()))
+  res
+}
+
+library(bbmle)
+
+m0 <- mle2(minuslogl = nll_wrap, start = list(logbeta = -10), trace = TRUE)
+
