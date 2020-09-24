@@ -29,9 +29,9 @@ pomp_covar <- covariate_table(
     nbasis=n_knots,
     degree=0
   ),
-  rel_beta_change = 1,
-  trend_sim = 10,  # this is a placeholder only needed for simulation
-  fit = 1,  # 1 = fitting; 0 = simulating
+  rel_beta_change = 2,
+  trend_sim = 1,  # this is a placeholder only needed for simulation
+  fit = 0,  # 1 = fitting; 0 = simulating
   times="t",
   order = "constant"
 )
@@ -42,6 +42,7 @@ pomp_model <- makepompmodel(par_var_list = par_var_list,
                             n_knots = n_knots)
 
 par_var_list$allparvals["log_beta_s"] <- -11
+par_var_list$allparvals["C1_0"] <- 100
 coef(pomp_model) <- par_var_list$allparvals
 out <- pomp::simulate(pomp_model, times = 1:12)
 
@@ -163,7 +164,7 @@ eval_model <- function(xhat, params, time, N, vf_expressions, Aformulas, stoich,
 xhat0 <- numeric(length(statenms))
 names(xhat0) <- statenms
 xhat0["S"] <- 1e6
-xhat0["Isd1"] <- 1
+xhat0["C1"] <- xhat0["C2"] <- xhat0["C3"] <- xhat0["C4"] <- 100
 
 stoichn <- stoich
 mode(stoichn) <- "numeric"
@@ -185,7 +186,7 @@ iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  
     })
   }
   init.vars <- c(xhat, as.numeric(P))
-  out <- lsoda(init.vars, c(0, 0 + dt), PModel, params)[2, -1]
+  out <- deSolve::lsoda(init.vars, c(0, 0 + dt), PModel, params)[2, -1]
   xhat_next <- out[inds]
   P_next <- matrix(out[-inds], nrow = N, ncol = N)
   list(xhat = xhat_next, P = P_next)
@@ -271,6 +272,9 @@ kfnll <-
     
   }
 
-kfo <- kfnll(data = sd, xhat = xhat0, P0 = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
+kfo <- kfnll(data = sd[-1, ], xhat = xhat0, P0 = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
                       jac = Aformulas, frates = frates, stoich = stoichn, dt = 1)
 
+plot(sd$time[-1], kfo$xhat_kk["E1",], xlab = "Time", ylab = "First latent compartment", type = 'l')
+points(sd$time[-1], sd$E1[-1], col = "blue")
+legend("topright", pch = c(1, NA), lty = c(NA, 1), col = c("blue", 1), legend = c("Simulation (Truth)", "Kalman filter based on cases"))
