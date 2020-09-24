@@ -170,30 +170,24 @@ mvals <- eval_model(xhat = xhat0, params = par_var_list$allparvals, N = N, vf_ex
                     frates = frates, stoich = stoichn)
 
 iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  stoich, frates, dt){
-  
-  mvals <- eval_model(xhat = xhat, params = params, N = N, vf_expressions = vf, Aformulas = jac, time = time,
-                      frates = frates, stoich = stoich)
-  
-  eig <- eigen(mvals$Jacobian)
-  W <- eig$vectors 
-  Winv <- solve(eig$vectors)
-  M <- W %*% diag(exp(eig$values * dt)) %*% Winv
-  
-  xhat_next <- mvals$vectorfield * dt + xhat
-  
-  Btilde <- Winv %*% mvals$B %*% t(Winv)
-  E <- function(gamma, t){
-    if(gamma == 0) return(t)
-    exp(gamma * t) / gamma - 1 / gamma
+  inds <- seq_len(N)
+  PModel <- function(t, x, parms) {
+    with(as.list(c(parms, x)), {
+
+      xhat <- x[inds]
+      P <- matrix(x[-inds], nrow = N, ncol = N)
+      Q <- mvals$B
+      mvals <- eval_model(xhat = xhat, params = parms, N = N, vf_expressions = vf, Aformulas = jac, time = t,
+                          frates = frates, stoich = stoich)
+      dxhat <-  mvals$vectorfield
+      dP <-  mvals$Jacobian %*% P + P %*% t(mvals$Jacobian) + mvals$B
+      list(c(dxhat, as.numeric(dP)))
+    })
   }
-  coef <- outer(eig$values, eig$values, "+")
-  Sigma_tilde <- matrix(NA, nrow = N, ncol = N)
-  for(i in seq_len(N)) {
-    for(j in seq_len(N)) {
-      Sigma_tilde[i, j] <- Btilde[i, j] * E(coef[i, j], dt)
-    }
-  }
-  P_next <- W %*% Sigma_tilde %*% t(W) * sqrt(pop.size) + M %*% P %*% t(M)
+  init.vars <- c(xhat, as.numeric(P))
+  out <- lsoda(init.vars, c(0, 0 + dt), PModel, params)[2, -1]
+  xhat_next <- out[inds]
+  P_next <- matrix(out[-inds], nrow = N, ncol = N)
   list(xhat = xhat_next, P = P_next)
 }
 
