@@ -217,6 +217,7 @@ kfnll <-
            logit_b5,
            logit_b6,
            logit_rho,
+           logit_tau,
            logit_iota,
            xhat0 = structure(c(20e6, 99.2, 99.2, 0), .Dim = c(4L, 1L), 
                              .Dimnames = list(c("S", "E", "I", "C"), NULL)),
@@ -242,8 +243,8 @@ kfnll <-
     # Initialize
     z_1 <-  cdata$reports[1]
     H <- matrix(c(0, 0, 0, pvec["rho"]), ncol = 4)
-    #R <- max(5, z[1] * pvec["tau"])
-    R <- max(1, z[1] * (1 - pvec["rho"]))
+    R <- max(5, z[1] * pvec["tau"])
+    #R <- max(1, z[1] * (1 - pvec["rho"]))
     #R <- max(tau2, z_1 + z_1 ^ 2 /  pvec["tau"]) 
     
     
@@ -261,7 +262,7 @@ kfnll <-
     
     ## Now calculate for each step in simulation
     
-    T <- nrow(case_data)
+    T <- nrow(cdata)
     z <- cdata$reports
     
     ytilde_kk <- ytilde_k <- S <- array(NA_real_, dim = c(1, T))
@@ -287,8 +288,8 @@ kfnll <-
                             time.steps = cdata$time[c(i - 1, i)])
       xhat_kkmo[, i] <- XP$xhat
       P_kkmo[, , i] <- XP$PN
-      #R <- max(5, z[i - 1] * pvec["tau"])
-      R <- max(1, z[i - 1] * (1 - pvec["rho"]))
+      R <- max(5, z[i - 1] * pvec["tau"])
+      #R <- max(1, z[i - 1] * pvec["rho"]))
       #R <- max(tau2, xhat_kkmo["C", i] * pvec["rho"] + (xhat_kkmo["C", i] * pvec["rho"]) ^ 2 / pvec["tau"])
       S[, i] <- H %*% P_kkmo[, , i] %*% t(H) + R
       K[, i] <- P_kkmo[, , i] %*% t(H) %*% solve(S[, i])
@@ -326,17 +327,17 @@ b_I0 <- 100
 a_E0 <- 0
 b_E0 <- 200
 
-a_bpar <- 0
-b_bpar <- 6
+a_bpar <- -9
+b_bpar < 9
 
 a_rho <- 0
 b_rho <- 1
 
 a_iota <- 0
-b_iota <- 200
+b_iota <- 300
 
-a_tau <- 0.001
-b_tau <- 1000
+a_tau <- 0.0001
+b_tau <- 2
 
 a_tau2 <- 0
 b_tau2 <- 20
@@ -352,24 +353,38 @@ pvec2["b6"] <- 0
 
 Phat0 <- diag(c(1e4, 1e2, 1e2, 0))
 
+
+## Find reasonable initial values for transmission terms
+
+
+plot(case_data$reports)
+Rt <- case_data$reports[-1] / case_data$reports[nrow(case_data)]
+
+lhs <- log(Rt / 0.4 - 1)
+rhs <- cov_data[-c(1, nrow(cov_data)), -1]
+rdata <- cbind(lhs, rhs)
+
+bm <- lm(lhs~0 + xi1 + xi2 + xi3 + xi4 + xi5 + xi6, data = rdata)
+
+
+
 system.time(m0 <- mle2(minuslogl = kfnll, 
-                       start = list(logit_beta_mu = scaled_logit(10, a_beta_mu, b_beta_mu), 
-                                    logit_I0 = scaled_logit(10, a_I0, b_I0),
-                                    logit_E0 = scaled_logit(10, a_E0, b_E0),
-                                    logit_b1 = scaled_logit(4.4, a_bpar, b_bpar),
-                                    logit_b2 = scaled_logit(5.0, a_bpar, b_bpar),
-                                    logit_b3 = scaled_logit(1e-3, a_bpar, b_bpar),
-                                    logit_b4 = scaled_logit(1e-3, a_bpar, b_bpar),
-                                    logit_b5 = scaled_logit(2.65, a_bpar, b_bpar),
-                                    logit_b6 = scaled_logit(1e-3, a_bpar, b_bpar),
-                                    logit_rho = scaled_logit(0.9, a_rho, b_rho),
-                                    logit_iota = scaled_logit(100, a_iota, b_iota)),
+                       start = list(logit_beta_mu = scaled_logit(22, a_beta_mu, b_beta_mu), 
+                                    logit_I0 = scaled_logit(85, a_I0, b_I0),
+                                    logit_E0 = scaled_logit(197, a_E0, b_E0),
+                                    logit_b1 = scaled_logit(7.8, a_bpar, b_bpar),
+                                    logit_b2 = scaled_logit(7.8, a_bpar, b_bpar),
+                                    logit_b3 = scaled_logit(-8.9, a_bpar, b_bpar),
+                                    logit_b4 = scaled_logit(2, a_bpar, b_bpar),
+                                    logit_b5 = scaled_logit(-1.5, a_bpar, b_bpar),
+                                    logit_b6 = scaled_logit(2.8, a_bpar, b_bpar),
+                                    logit_rho = scaled_logit(0.84, a_rho, b_rho),
+                                    logit_tau = scaled_logit(0.005, a_tau, b_tau),
+                                    logit_iota = scaled_logit(0.6, a_iota, b_iota)),
                        method = "Nelder-Mead",
                        skip.hessian = TRUE,
                        control = list(reltol = 1e-4, trace = 1, maxit = 1000),
-                       data = list(cdata = case_data, pvec = pvec2, Phat0 = Phat0)))
-#TODO change eta and gamma for covid
-
+                       data = list(cdata = case_data[-c(1,2,3,4,5),], pvec = pvec2, Phat0 = Phat0)))
 
 scaled_expit(coef(m0)["logit_I0"], a_I0, b_I0)
 scaled_expit(coef(m0)["logit_E0"], a_E0, b_E0)
@@ -379,7 +394,7 @@ scaled_expit(coef(m0)["logit_tau"], a_tau, b_tau)
 scaled_expit(coef(m0)["logit_tau2"], a_tau2, b_tau2)
 
 kfret <- with(as.list(coef(m0)), 
-              kfnll(cdata = case_data, pvec = pvec2, 
+              kfnll(cdata = case_data[-seq(1,5),], pvec = pvec2, 
                     logit_beta_mu = logit_beta_mu, 
                     logit_E0 = logit_E0,
                     logit_I0 = logit_I0,
@@ -399,20 +414,21 @@ qqnorm(kfret$ytilde_k[test]/ kfret$S[test]) # evalutate departure from normality
 abline(0, 1)
 
 
+test <- case_data$time >= 2020.18
 par(mfrow = c(4, 1))
-plot(case_data$time, kfret$xhat_kkmo["C",] * rho_hat)
-points(case_data$time, kfret$xhat_kk["C",] * rho_hat, col = 2, pch = 2)
-lines(case_data$time, case_data$reports)
-plot(case_data$time, kfret$S, log = "y")
-plot(case_data$time, kfret$ytilde_k)
-plot(case_data$time, kfret$ytilde_k / kfret$S)
+plot(case_data$time[test], kfret$xhat_kkmo["C",] * rho_hat)
+points(case_data$time[test], kfret$xhat_kk["C",] * rho_hat, col = 2, pch = 2)
+lines(case_data$time[test], case_data$reports[test])
+plot(case_data$time[test], kfret$S, log = "y")
+plot(case_data$time[test], kfret$ytilde_k)
+plot(case_data$time[test], kfret$ytilde_k / kfret$S)
 
 par(mfrow = c(2, 1))
-plot(case_data$time, kfret$xhat_kkmo["I",])
-points(case_data$time, kfret$xhat_kk["I",], col = 2, pch = 2)
+plot(case_data$time[test], kfret$xhat_kkmo["I",])
+points(case_data$time[test], kfret$xhat_kk["I",], col = 2, pch = 2)
 
-plot(case_data$time, kfret$xhat_kkmo["S",])
-points(case_data$time, kfret$xhat_kk["S",], col = 2, pch = 2)
+plot(case_data$time[test], kfret$xhat_kkmo["S",])
+points(case_data$time[test], kfret$xhat_kk["S",], col = 2, pch = 2)
 
 
 tgrid <- case_data$time
@@ -430,6 +446,6 @@ bhat <- scaled_expit(coef(m0)[is_spline_par], a_bpar, b_bpar)
 seasgrid <- 1 + exp(ximat %*% bhat)
 beta_mu_hat <- scaled_expit(coef(m0)["logit_beta_mu"], a_beta_mu, b_beta_mu)
 R0grid <- beta_mu_hat * seasgrid / (365 / 5)
-plot(tgrid, R0grid)
+plot(tgrid[test], R0grid[test])
 
 
