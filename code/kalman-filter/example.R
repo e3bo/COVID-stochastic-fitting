@@ -19,8 +19,8 @@ est_these_pars <- c(est_these_pars, knot_coefs)
 # Set the parameter values and initial conditions
 par_var_list <- setparsvars(est_these_pars = est_these_pars, 
                             est_these_inivals = est_these_inivals,
-                            population = 1e6,
-                            rnaught = 6)  # set R0 at beginning of epidemic
+                            population = 9e6,
+                            rnaught = 4)  # set R0 at beginning of epidemic
 
 pomp_covar <- covariate_table(
   t = pomp_data$time,
@@ -41,10 +41,8 @@ pomp_model <- makepompmodel(par_var_list = par_var_list,
                             pomp_covar = pomp_covar,
                             n_knots = n_knots)
 
-par_var_list$allparvals["log_beta_s"] <- -11
-par_var_list$allparvals["C1_0"] <- 100
 coef(pomp_model) <- par_var_list$allparvals
-out <- pomp::simulate(pomp_model, times = 1:12)
+out <- pomp::simulate(pomp_model, times = 1:100)
 
 sd <- as.data.frame(out)
 
@@ -162,26 +160,27 @@ eval_model <- function(xhat, params, time, N, vf_expressions, Aformulas, stoich,
 }
 
 xhat0 <- numeric(length(statenms))
+xhat0 <- as.numeric(sd[1, statenms])
 names(xhat0) <- statenms
-xhat0["S"] <- 1e6
-xhat0["C1"] <- xhat0["C2"] <- xhat0["C3"] <- xhat0["C4"] <- 100
 
 stoichn <- stoich
 mode(stoichn) <- "numeric"
 mvals <- eval_model(xhat = xhat0, params = par_var_list$allparvals, N = N, vf_expressions = vf_formulas, Aformulas = Aformulas, time = 2,
                     frates = frates, stoich = stoichn)
 
-iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  stoich, frates, dt){
+iterate_f_and_P <- function(xhat, P, params, N, vf, jac, time,  stoich, frates, dt){
   inds <- seq_len(N)
   PModel <- function(t, x, parms) {
     with(as.list(c(parms, x)), {
-
       xhat <- x[inds]
+      xhat[xhat < 0 ] <- 0
       P <- matrix(x[-inds], nrow = N, ncol = N)
+      zinds <- which(diag(P) < 0)
+      P[zinds, zinds] <- 0
       mvals <- eval_model(xhat = xhat, params = parms, N = N, vf_expressions = vf, Aformulas = jac, time = t,
                           frates = frates, stoich = stoich)
       dxhat <-  mvals$vectorfield
-      dP <-  mvals$Jacobian %*% P + P %*% t(mvals$Jacobian) + mvals$B
+      dP <-  (mvals$Jacobian %*% P + P %*% t(mvals$Jacobian) + mvals$B)
       list(c(dxhat, as.numeric(dP)))
     })
   }
@@ -193,7 +192,7 @@ iterate_f_and_P <- function(xhat, P, pop.size = 1e5, params, N, vf, jac, time,  
 }
 
 P0 <- diag(N)
-P0[20] <- 0
+P0[20,20] <- 0
 xP <- iterate_f_and_P(xhat = xhat0, P = P0, params = par_var_list$allparvals, N = N, vf = vf_formulas, 
                          jac = Aformulas, time = 2, frates = frates, stoich = stoichn, dt = 1)
 
@@ -248,8 +247,8 @@ kfnll <-
       xhat <- xhat_kk[, i - 1]
       xhat[obsvars] <- 0
       P <- P_kk[,, i - 1]
-      P[obsvars, ] <- 0
-      P[, obsvars] <- 0
+      P[obsvars, ] <- 1e-4
+      P[, obsvars] <- 1e-4
       xP <- iterate_f_and_P(xhat, P, params = params, N = N, vf = vf, 
                             jac = jac, frates = frates, stoich = stoich, 
                             time = data$time[i - 1], dt = data$time[i]  - data$time[i - 1])
@@ -279,6 +278,11 @@ plot(sd$time[-1], kfo$xhat_kk["E1",], xlab = "Time", ylab = "First latent compar
 points(sd$time[-1], sd$E1[-1], col = "blue")
 legend("topright", pch = c(1, NA), lty = c(NA, 1), col = c("blue", 1), legend = c("Simulation (Truth)", "Kalman filter based on cases"))
 
+plot(sd$time[-1], kfo$xhat_kk["C_new",], xlab = "Time", ylab = "cases", type = 'l')
+points(sd$time[-1], sd$cases[-1], col = "blue")
+legend("topright", pch = c(1, NA), lty = c(NA, 1), col = c("blue", 1), legend = c("Simulation (Truth)", "Kalman filter based on cases"))
+
+
 nll_wrap <- function(logbeta){
   params <- par_var_list$allparvals
   params["log_beta_s"] <- logbeta
@@ -290,5 +294,5 @@ nll_wrap <- function(logbeta){
 
 library(bbmle)
 
-m0 <- mle2(minuslogl = nll_wrap, start = list(logbeta = -10), trace = TRUE)
+m0 <- mle2(minuslogl = nll_wrap, start = list(logbeta = -12), method = "L-BFGS-B", lower = -20, upper = -10)
 
