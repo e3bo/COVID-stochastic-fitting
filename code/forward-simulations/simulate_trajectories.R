@@ -66,7 +66,7 @@ simulate_trajectories <- function(
               trendO_0 = mean(trendO))
   
   
-  param_vals[which(names(param_vals) %in% names(inits))] <- inits
+  param_vals[names(inits)] <- inits
   
   # Update pomp covariate table
   if(covar_action == "status_quo") {

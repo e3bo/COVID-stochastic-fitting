@@ -125,6 +125,7 @@ for (i in 1:length(statevec))
 
   # Get the locations's iniparvals
   initdate <- statedf %>% filter(state_full == dolocation) %>% pull(init)
+  if (FALSE){
   iniparvals <- initdate %>% 
     switch(
       # if init = 'fresh'
@@ -132,8 +133,8 @@ for (i in 1:length(statevec))
       
       # if init = 'last'
       ## edit source file location for 00-CREATE-HEADER.R
-      last = readRDS(here::here(paste0("output-local/", filename_label, "_results.rds")))$all_partable %>% 
-        dplyr::arrange(-LogLik) %>% dplyr::slice(1) %>% as.list(),
+      #last = readRDS(here::here(paste0("output-local/", filename_label, "_results.rds")))$all_partable %>% 
+      #  dplyr::arrange(-LogLik) %>% dplyr::slice(1) %>% as.list(),
       
       # else
       ## does not exist for 00-Run-LOCAL.R
@@ -141,7 +142,9 @@ for (i in 1:length(statevec))
       readRDS(here::here(paste0("output/", initdate, "/", filename_label, "_results.rds")))$all_partable %>% 
         dplyr::arrange(-LogLik) %>% dplyr::slice(1) %>% as.list()
       )
-
+  }
+  inivals <- readRDS("output/current/Washington-params-natural.rds")
+  iniparvals <- t(inivals[,-1]) %>% as_tibble() %>% arrange(-LogLik) %>% slice(1)
   # Set the parameter values and initial conditions
   par_var_list <- setparsvars_warm(iniparvals = iniparvals, # list or "fresh"
                                    est_these_pars = c(est_these_pars, knot_coefs), 

@@ -219,7 +219,7 @@ pn <- bind_rows(pn1, pn2) %>% select(-is_fitted) %>% t() %>%
          Ia1_0 = log(Ia1_0),
          Isu1_0 = log(Isu1_0),
          Isd1_0 = log(Isd1_0)) %>%
-  select(- theta_cases, -theta_deaths, -sigma_dw)
+  select(-theta_cases, -theta_deaths, -sigma_dw)
 
 others <- setdiff(names(params), colnames(pn))
 pomp_res$all_partable <- bind_cols(pn, as_tibble(as.list(params[others]))) %>% 
