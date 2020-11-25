@@ -182,9 +182,11 @@ simulate_trajectories <- function(
   # plot(c(pomp_data %>% filter(Variable == "Cdeaths") %>% pull(Value), sim_out$D_new), type = "l")
   
   # pomp runs with internal time units, add real time to results
-  end_date <- as.Date(start_date) + max(sim_out$time) - 1
+  t0 <- min(time(pomp_model))
+  tmax <- max(sim_out$time)
+  end_date <- as.Date(start_date) + tmax - t0
   dates <- seq.Date(as.Date(start_date), end_date, "days") 
-  dates_df <- data.frame(time = c(1:length(dates)), Date = dates)
+  dates_df <- data.frame(time = t0:tmax, Date = dates)
   
   # Combine pomp simulations with dates
   sims <- sim_out %>% 
