@@ -212,3 +212,5 @@ summarize_simulations <- function(sims_out, pomp_data, pomp_covar, location, mle
   
   return(all_summaries)
 }
+
+

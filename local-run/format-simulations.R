@@ -87,8 +87,12 @@ paths_to_forecast <- function(out, loc = "13", wks_ahead = 1:4, fdt) {
 
 res <- readRDS("output/Georgia_weekly_results.rds")
 sim <- res$scenarios$sims
+fdt <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
+
 simout <- sim %>% select(SimType, Date, Rep = .id, cases = C_new, deaths = D_new)
 
 sq <- filter(simout, SimType == "status_quo") %>% select(-SimType)
-fcst <- paths_to_forecast(sq, fdt = "2020-11-23")
 
+fcst <- paths_to_forecast(sq, fdt = fdt)
+pth <- paste0(fdt, "-CEID-compart_mif_sq.csv")
+write_csv(fcst, pth)
