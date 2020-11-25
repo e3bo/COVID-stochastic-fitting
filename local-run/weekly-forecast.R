@@ -30,6 +30,20 @@ source("./code/model-setup/makepompmodel.R") #generates the pomp model
 pomp_listr <- readRDS("./header/pomp_list.rds")
 myargument <- 38 ## Georgia
 this_pomp <- pomp_listr[[myargument]]
+fdt <- "2020-11-16"
+
+# remove data following forecast date
+
+pdata_windowed <- this_pomp$pomp_data %>% filter(date < fdt)
+covar_dates <- as.Date(this_pomp$pomp_covar@times, origin = "2020-03-03")
+covar_windowed <- this_pomp$pomp_covar
+covar_windowed@table <- covar_windowed@table[, covar_dates < fdt]
+covar_windowed@times <- covar_windowed@times[covar_dates < fdt]
+
+this_pomp$pomp_data <- pdata_windowed
+this_pomp$pomp_covar <- covar_windowed
+
+
 n_knots <- round(nrow(this_pomp$pomp_data) / 21)
 
 
@@ -39,6 +53,8 @@ n_knots <- round(nrow(this_pomp$pomp_data) / 21)
 # defined outside loop so it's the same for each state
 # --------------------------------------------------
 timestamp <- readRDS("./header/timestamp.rds")
+
+
 
 # Make the pomp model
 pomp_model <- makepompmodel(
@@ -56,8 +72,8 @@ rm(this_pomp) #remove the old object
 
 keyvars <- c("MIF_ID", "LogLik", "LogLik_SE")
 pn1 <-
-  readRDS("./output/current/Georgia-params-natural.rds")[keyvars,]
-pn2 <- readRDS("./output/current/Georgia-params-natural.rds") %>%
+  readRDS("./archive/2020-11-16/Georgia-params-natural.rds")[keyvars,]
+pn2 <- readRDS("./archive/2020-11-16/Georgia-params-natural.rds") %>%
   filter(is_fitted == "yes")
 
 assumed_fitted <-
@@ -106,7 +122,7 @@ pn <- bind_rows(pn1, pn2) %>% select(-is_fitted) %>% t() %>%
 
 
 mle_params <-
-  readRDS("./output/current/parameter-estimates-Georgia.rds")
+  readRDS("./archive/2020-11-16/parameter-estimates-Georgia.rds")
 others <- setdiff(names(mle_params), colnames(pn))
 pomp_res$all_partable <-
   bind_cols(pn, as_tibble(as.list(mle_params[others]))) %>%
