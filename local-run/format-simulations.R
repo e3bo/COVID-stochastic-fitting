@@ -89,10 +89,10 @@ res <- readRDS("output/Georgia_weekly_results.rds")
 sim <- res$scenarios$sims
 fdt <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
 
-simout <- sim %>% select(SimType, Date, Rep = .id, cases = C_new, deaths = D_new)
+simout <- sim %>% select(SimType, Date, Rep = rep_id, cases = C_new, deaths = D_new)
 
 sq <- filter(simout, SimType == "status_quo") %>% select(-SimType)
 
 fcst <- paths_to_forecast(sq, fdt = fdt)
-pth <- paste0(fdt, "-CEID-compart_mif_sq.csv")
+pth <- paste0("CEID-compart_mif_sq/", fdt, "-CEID-compart_mif_sq.csv")
 write_csv(fcst, pth)
