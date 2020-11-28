@@ -87,7 +87,9 @@ paths_to_forecast <- function(out, loc = "13", wks_ahead = 1:4, fdt) {
 
 res <- readRDS("output/Georgia_weekly_results.rds")
 sim <- res$scenarios$sims
-fdt <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
+sim_start <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
+fdt <- "2020-11-16"
+stopifnot(as.Date(fdt) >= sim_start)
 
 simout <- sim %>% select(SimType, Date, Rep = rep_id, cases = C_new, deaths = D_new)
 

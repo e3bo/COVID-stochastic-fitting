@@ -68,16 +68,31 @@ mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time)
 
 pdata_versioned <- mdata3
 
-covar_dates <- as.Date(this_pomp$pomp_covar@times, origin = "2020-03-03")
-covar_windowed <- this_pomp$pomp_covar
-covar_windowed@table <- covar_windowed@table[, covar_dates < fdt]
-covar_windowed@times <- covar_windowed@times[covar_dates < fdt]
-
 this_pomp$pomp_data <- pdata_versioned
-this_pomp$pomp_covar <- covar_windowed
-
 n_knots <- round(nrow(this_pomp$pomp_data) / 21)
 
+max_obs_date <- max(this_pomp$pomp_data$date)
+
+cdata <- mdata %>% filter(variable == "mobility_trend") %>% group_by(date) %>% 
+  slice(1) %>% 
+  mutate(time = as.integer(date) - as.integer(as.Date("2020-03-03"))) %>%
+  filter(date <= max_obs_date)
+
+covar <- covariate_table(
+  t = pdata_versioned$time,
+  seas = bspline.basis(
+    x=t,
+    nbasis=n_knots,
+    degree=3
+  ),
+  rel_beta_change = as.matrix(cdata$mean_value),
+  trend_sim = as.matrix(rep(10, times = nrow(cdata))),  # this is a placeholder only needed for simulation
+  fit = 1,  # 1 = fitting; 0 = simulating
+  times="t",
+  order = "constant"
+)
+
+this_pomp$pomp_covar <- covar
 
 # --------------------------------------------------
 # Create a time-stamp variable
