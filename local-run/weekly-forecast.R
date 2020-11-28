@@ -16,7 +16,7 @@ library('pomp')
 library('dplyr')
 library('tidyr')
 library('tibble')
-
+library(readr)
 
 # --------------------------------------------------
 # Source all needed functions/scripts
@@ -28,21 +28,53 @@ source("./code/model-setup/makepompmodel.R") #generates the pomp model
 
 # Load the pomp information
 pomp_listr <- readRDS("./header/pomp_list.rds")
-myargument <- 38 ## Georgia
+myargument <- 38
 this_pomp <- pomp_listr[[myargument]]
 fdt <- "2020-11-16"
 
-# remove data following forecast date
+locname <- this_pomp$location
 
-pdata_windowed <- this_pomp$pomp_data %>% filter(date < fdt)
+## load version of data used in model fitting
+data_path <- file.path("archive", fdt, paste0(locname, ".csv"))
+mdata <- read_csv(
+  data_path,
+  col_types = cols_only(
+    location = col_character(),
+    date = col_date(format = ""),
+    variable = col_character(),
+    mean_value = col_double()
+  )
+)
+
+mdata2 <- mdata %>% 
+  select(date, location, variable, mean_value) %>%
+  filter(variable %in% c("actual_daily_cases", "actual_daily_deaths")) %>%
+  pivot_wider(names_from = variable, values_from = mean_value) %>%
+  rename(cases = actual_daily_cases,
+         deaths = actual_daily_deaths) %>%
+  mutate(deaths = ifelse(is.na(deaths), 0, deaths)) %>%
+  bind_cols(hosps = NA_real_) %>%
+  mutate(tmp = as.integer(date))
+
+origin <- mdata2$tmp[which(mdata2$date == "2020-03-04")] - 1
+mdata2$time <- mdata2$tmp - origin %>% as.integer()
+mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time)
+
+# uncomment to test that data has not changed
+#pdata_windowed <- this_pomp$pomp_data %>% filter(date < fdt)
+#B <- mdata3 %>% filter(date > "2020-03-06")
+#A <- pdata_windowed %>% filter(date < "2020-11-11")
+#all.equal(A %>% select(-hosps), B %>% select(-hosps)) # hops are not used in fitting so exclude
+
+pdata_versioned <- mdata3
+
 covar_dates <- as.Date(this_pomp$pomp_covar@times, origin = "2020-03-03")
 covar_windowed <- this_pomp$pomp_covar
 covar_windowed@table <- covar_windowed@table[, covar_dates < fdt]
 covar_windowed@times <- covar_windowed@times[covar_dates < fdt]
 
-this_pomp$pomp_data <- pdata_windowed
+this_pomp$pomp_data <- pdata_versioned
 this_pomp$pomp_covar <- covar_windowed
-
 
 n_knots <- round(nrow(this_pomp$pomp_data) / 21)
 
@@ -135,5 +167,3 @@ pomp_res$scenarios <- runscenarios(
 )
 filename = paste0('./output/', pomp_res$filename_label, '_weekly_results.rds')
 saveRDS(object = pomp_res, file = filename)
-
-
