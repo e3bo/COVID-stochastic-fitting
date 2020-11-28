@@ -72,8 +72,10 @@ simulate_trajectories <- function(
   if(covar_action == "status_quo") {
     covars <- pomp_model@covar@table["rel_beta_change", ]
     covars <- c(covars, rep(as.numeric(tail(covars, 1)), times = horizon))
+    covt <- pomp_model@covar@times
+    covt <- c(covt, max(covt) + seq_len(horizon))
     covars <- as.data.frame(covars) %>%
-      mutate(time = 1:n()) %>%
+      mutate(time = covt) %>%
       rename("rel_beta_change" = covars)
     trendmut <- mean(tail(trend_trans, 30)[1:20])
     trendmu <- log(trendmut/(1-trendmut))
@@ -91,8 +93,10 @@ simulate_trajectories <- function(
     dec <- seq(lastval, minval, length.out = 14)
     final <- rep(minval, times = (horizon - length(dec)))
     covars <- c(covars, dec, final)
+    covt <- pomp_model@covar@times
+    covt <- c(covt, max(covt) + seq_len(horizon))
     covars <- as.data.frame(covars) %>%
-      mutate(time = 1:n()) %>%
+      mutate(time = covt) %>%
       rename("rel_beta_change" = covars)
     #trend_sim <- rep(mean(tail(trend, 30)), nrow(covars))
     trendmut <- mean(tail(trend_trans, 30)[1:20])
@@ -110,8 +114,10 @@ simulate_trajectories <- function(
     inc <- seq(lastval, maxval, length.out = 14)
     final <- rep(maxval, times = (horizon - length(inc)))
     covars <- c(covars, inc, final)
+    covt <- pomp_model@covar@times
+    covt <- c(covt, max(covt) + seq_len(horizon))
     covars <- as.data.frame(covars) %>%
-      mutate(time = 1:n()) %>%
+      mutate(time = covt) %>%
       rename("rel_beta_change" = covars)
     # trend_sim <- rep(mean(tail(trend, 30)), nrow(covars))
     trendmut <- mean(tail(trend_trans, 30)[1:20])
@@ -129,8 +135,10 @@ simulate_trajectories <- function(
     inc <- seq(lastval, maxval, length.out = 14)
     final <- rep(maxval, times = (horizon - length(inc)))
     covars <- c(covars, inc, final)
+    covt <- pomp_model@covar@times
+    covt <- c(covt, max(covt) + seq_len(horizon))
     covars <- as.data.frame(covars) %>%
-      mutate(time = 1:n()) %>%
+      mutate(time = covt) %>%
       rename("rel_beta_change" = covars)
     # trend_inc <- seq(inits$trendO_0, 100, length.out = 14)
     # trend_inc <- rep(inits$trendO_0, times = horizon)
