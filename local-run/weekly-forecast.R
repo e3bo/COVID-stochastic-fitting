@@ -109,7 +109,7 @@ rm(this_pomp) #remove the old object
 # Run scenarios
 
 keyvars <- c("MIF_ID", "LogLik", "LogLik_SE")
-pars_path <- file.path("arcive", fdt, paste0(locname, "-params-natural.rds"))
+pars_path <- file.path("archive", fdt, paste0(locname, "-params-natural.rds"))
 pn1 <-
   readRDS(pars_path)[keyvars,]
 pn2 <- readRDS(pars_path) %>%
@@ -159,7 +159,7 @@ pn <- bind_rows(pn1, pn2) %>% select(-is_fitted) %>% t() %>%
   ) %>%
   select(-theta_cases,-theta_deaths,-sigma_dw)
 
-mle_pars_path <- file.path("arcive", fdt, paste0("parameter-estimates-", locname, ".rds"))
+mle_pars_path <- file.path("archive", fdt, paste0("parameter-estimates-", locname, ".rds"))
 mle_params <-
   readRDS(mle_pars_path)
 others <- setdiff(names(mle_params), colnames(pn))
