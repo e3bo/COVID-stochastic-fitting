@@ -1,3 +1,5 @@
+#! /usr/bin/env Rscript
+
 # weekly-forecast.R
 # This script is designed to simulate the model forward under different 
 # scenarios to produce the data needed to generate forecasts in the standard
@@ -28,9 +30,9 @@ source("./code/model-setup/makepompmodel.R") #generates the pomp model
 
 # Load the pomp information
 pomp_listr <- readRDS("./header/pomp_list.rds")
-myargument <- 37
-this_pomp <- pomp_listr[[myargument]]
-fdt <- "2020-11-16"
+state_index <- Sys.getenv("state_index") %>% as.integer()
+this_pomp <- pomp_listr[[state_index]]
+fdt <- Sys.getenv("fdt")
 
 locname <- this_pomp$location
 
@@ -56,16 +58,10 @@ mdata2 <- mdata %>%
   bind_cols(hosps = NA_real_) %>%
   mutate(tmp = as.integer(date))
 
-origin <- mdata2$tmp[which(mdata2$date == "2020-03-04")] - 1
+origin <- mdata2$tmp[which(mdata2$date == "2020-03-24")] - 21 #using 2020-03-03 - 0 would seem more natural, but that date is not in all data sets
 mdata2$time <- mdata2$tmp - origin %>% as.integer()
-mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time)
-
-# uncomment to test that data has not changed
-#pdata_windowed <- this_pomp$pomp_data %>% filter(date < fdt)
-#B <- mdata3 %>% filter(date > "2020-03-06")
-#A <- pdata_windowed %>% filter(date < "2020-11-11")
-#all.equal(A %>% select(-hosps), B %>% select(-hosps)) # hops are not used in fitting so exclude
-
+mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time) %>% 
+  filter(time >= 1) # time 1 is used as t0 in makepompmodel()
 pdata_versioned <- mdata3
 
 this_pomp$pomp_data <- pdata_versioned
@@ -76,7 +72,8 @@ max_obs_date <- max(this_pomp$pomp_data$date)
 cdata <- mdata %>% filter(variable == "mobility_trend") %>% group_by(date) %>% 
   slice(1) %>% 
   mutate(time = as.integer(date) - as.integer(as.Date("2020-03-03"))) %>%
-  filter(date <= max_obs_date)
+  filter(date <= max_obs_date) %>%
+  filter(time >= 1)
 
 covar <- covariate_table(
   t = pdata_versioned$time,

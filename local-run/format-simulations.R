@@ -168,7 +168,7 @@ file2df <- function(fn, fdt, stp){
 write_scenario_fcst <- function(fdt, stp){
   data_dir <- file.path("weekly-forecast-simulations", fdt)
   files <- dir(data_dir, full.names = TRUE)
-  fcst <- map(files, file2df, fdt = fdt, stp = stp) %>% bind_rows()
+  fcst <- purrr::map(files, file2df, fdt = fdt, stp = stp) %>% bind_rows()
   suffix <- switch(stp,
                    status_quo = "sq",
                    linear_increase_sd = "li",
