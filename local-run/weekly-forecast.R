@@ -28,7 +28,7 @@ source("./code/model-setup/makepompmodel.R") #generates the pomp model
 
 # Load the pomp information
 pomp_listr <- readRDS("./header/pomp_list.rds")
-myargument <- 38
+myargument <- 37
 this_pomp <- pomp_listr[[myargument]]
 fdt <- "2020-11-16"
 
