@@ -94,15 +94,6 @@ covar <- covariate_table(
 
 this_pomp$pomp_covar <- covar
 
-# --------------------------------------------------
-# Create a time-stamp variable
-# Will be applied to saved results
-# defined outside loop so it's the same for each state
-# --------------------------------------------------
-timestamp <- readRDS("./header/timestamp.rds")
-
-
-
 # Make the pomp model
 pomp_model <- makepompmodel(
   par_var_list = this_pomp$par_var_list,
@@ -118,9 +109,10 @@ rm(this_pomp) #remove the old object
 # Run scenarios
 
 keyvars <- c("MIF_ID", "LogLik", "LogLik_SE")
+pars_path <- file.path("arcive", fdt, paste0(locname, "-params-natural.rds"))
 pn1 <-
-  readRDS("./archive/2020-11-16/Georgia-params-natural.rds")[keyvars,]
-pn2 <- readRDS("./archive/2020-11-16/Georgia-params-natural.rds") %>%
+  readRDS(pars_path)[keyvars,]
+pn2 <- readRDS(pars_path) %>%
   filter(is_fitted == "yes")
 
 assumed_fitted <-
@@ -167,9 +159,9 @@ pn <- bind_rows(pn1, pn2) %>% select(-is_fitted) %>% t() %>%
   ) %>%
   select(-theta_cases,-theta_deaths,-sigma_dw)
 
-
+mle_pars_path <- file.path("arcive", fdt, paste0("parameter-estimates-", locname, ".rds"))
 mle_params <-
-  readRDS("./archive/2020-11-16/parameter-estimates-Georgia.rds")
+  readRDS(mle_pars_path)
 others <- setdiff(names(mle_params), colnames(pn))
 pomp_res$all_partable <-
   bind_cols(pn, as_tibble(as.list(mle_params[others]))) %>%
@@ -180,5 +172,9 @@ pomp_res$scenarios <- runscenarios(
   par_var_list = pomp_res$par_var_list,
   forecast_horizon_days = 6 * 7
 )
-filename = paste0('./output/', pomp_res$filename_label, '_weekly_results.rds')
+outdir <- file.path("weekly-forecast-simulations", fdt)
+if(!dir.exists(outdir)){
+  dir.create(outdir, recursive = TRUE)
+}
+filename <- file.path(outdir, paste0(locname, ".rds")) 
 saveRDS(object = pomp_res, file = filename)

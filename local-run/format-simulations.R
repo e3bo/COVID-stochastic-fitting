@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 
 library(tidyverse)
 
@@ -38,7 +39,6 @@ samp_to_df <-
            vars = c("inc hosp", "inc death", "cum death", "inc case")) {
     purrr::map_dfr(vars, vardf, samp = sampdf)
   }
-
 
 # Take simulation trajectories and output a data frame in the format described
 # here: https://github.com/reichlab/covid19-forecast-hub/blob/6a7e5624ef540a55902770b7c17609d19e1f593a/data-processed/README.md
@@ -85,16 +85,36 @@ paths_to_forecast <- function(out, loc = "13", wks_ahead = 1:4, fdt) {
     filter((nchar(location)) <= 2 | str_detect(target, "inc case$")) ## only case forecasts accepted for counties
 }
 
-res <- readRDS("output/Georgia_weekly_results.rds")
-sim <- res$scenarios$sims
-sim_start <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
+file2df <- function(fn, fdt, stp){
+  res <- readRDS(fn)
+  sim <- res$scenarios$sims
+  sim_start <- sim %>% filter(Period == "Future") %>% pull(Date) %>% min()
+  stopifnot(as.Date(fdt) >= sim_start)
+  simout <- sim %>% 
+    select(SimType, Date, Rep = rep_id, cases = C_new, deaths = D_new)
+  sq <- filter(simout, SimType == stp) %>% select(-SimType)
+  fcst <- paths_to_forecast(sq, fdt = fdt)
+  fcst
+}
+
+write_scenario_fcst <- function(fdt, stp){
+  data_dir <- file.path("weekly-forecast-simulations", fdt)
+  files <- dir(data_dir, full.names = TRUE)
+  fcst <- map(files, file2df, fdt = fdt, stp = stp) %>% bind_rows()
+  suffix <- switch(stp,
+                   status_quo = "sq",
+                   linear_increase_sd = "li",
+                   return_normal = "rn")
+  fname <- paste0(fdt, "-CEID-compart_mif_", suffix, ".csv")
+  dirname <- paste0("CEID-compart_mif_", suffix)
+  if(!dir.exists(dirname)){
+    dir.create(dirname)
+  }
+  path <- file.path(dirname, fname)
+  write_csv(fcst, path = path)
+}
+
 fdt <- "2020-11-16"
-stopifnot(as.Date(fdt) >= sim_start)
-
-simout <- sim %>% select(SimType, Date, Rep = rep_id, cases = C_new, deaths = D_new)
-
-sq <- filter(simout, SimType == "status_quo") %>% select(-SimType)
-
-fcst <- paths_to_forecast(sq, fdt = fdt)
-pth <- paste0("CEID-compart_mif_sq/", fdt, "-CEID-compart_mif_sq.csv")
-write_csv(fcst, pth)
+write_scenario_fcst(fdt, stp = "status_quo")
+write_scenario_fcst(fdt, stp = "linear_increase_sd")
+write_scenario_fcst(fdt, stp = "return_normal")
