@@ -24,9 +24,9 @@ library(readr)
 # Source all needed functions/scripts
 # --------------------------------------------------
 
-source("./code/forward-simulations/simulate_trajectories.R")
-source("./code/forward-simulations/runscenarios.R") #runs forward simulations 
-source("./code/model-setup/makepompmodel.R") #generates the pomp model
+source("../code/forward-simulations/simulate_trajectories.R")
+source("../code/forward-simulations/runscenarios.R") #runs forward simulations 
+source("../code/model-setup/makepompmodel.R") #generates the pomp model
 
 # Load the pomp information
 pomp_listr <- readRDS("./header/pomp_list.rds")
