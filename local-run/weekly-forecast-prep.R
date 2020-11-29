@@ -33,9 +33,9 @@ library('vctrs')
 # --------------------------------------------------
 # Source all needed functions/scripts
 # --------------------------------------------------
-source(here::here("code/model-setup/setparsvars_warm.R")) #setting all parameters, specifying those that are  fitted
-source(here::here("code/data-processing/loadcleandata.R")) #data processing function
-source(here::here("code/data-processing/loadcleanucmobility.R")) #function that processes and retrieves covariate
+source("../code/model-setup/setparsvars_warm.R") #setting all parameters, specifying those that are  fitted
+source("../code/data-processing/loadcleandata.R") #data processing function
+source("../code/data-processing/loadcleanucmobility.R") #function that processes and retrieves covariate
 
 
 # --------------------------------------------------
@@ -92,7 +92,7 @@ statevec <- c(statevec[rmids], statevec[-rmids])
 # --------------------------------------------------
 # specify parameter initialization and mif runs for each state 
 # --------------------------------------------------
-state_pops <- readRDS(here::here("data/us_popsize.rds"))
+state_pops <- readRDS("../data/us_popsize.rds")
 statedf <- state_pops %>% 
   # warm start spec for each state
   dplyr::mutate(init = dplyr::case_when(
@@ -188,12 +188,12 @@ for (i in 1:length(statevec))
       
       # if init = 'last'
       ## edit source file location for 00-CREATE-HEADER.R
-      last = readRDS(here::here(paste0("output/current/parameter-estimates-", filename_label, ".rds"))) %>% as.list(),
+      last = readRDS(paste0("../output/current/parameter-estimates-", filename_label, ".rds")) %>% as.list(),
       
       # else
       ## does not exist for 00-Run-LOCAL.R
       ## edit source file location as needed for 00-CREATE-HEADER.R
-      readRDS(here::here(paste0("output/", initdate, "/parameter-estimates-", filename_label, ".rds"))) %>% as.list()
+      readRDS(paste0("../output/", initdate, "/parameter-estimates-", filename_label, ".rds")) %>% as.list()
     )
   
   # Set the parameter values and initial conditions
@@ -240,6 +240,9 @@ for (i in 1:length(statevec))
 
 
 # Save the outputs
+if(!dir.exists("header")){
+  dir.create("header")
+}
 saveRDS(pomp_list, file = "header/pomp_list.rds")
 saveRDS(timestamp, file = "header/timestamp.rds")
 saveRDS(statedf, file = "header/statedf.rds")
