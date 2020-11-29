@@ -27,17 +27,16 @@ library(readr)
 source("../code/forward-simulations/simulate_trajectories.R")
 source("../code/forward-simulations/runscenarios.R") #runs forward simulations 
 source("../code/model-setup/makepompmodel.R") #generates the pomp model
+source("../code/model-setup/setparsvars_warm.R") #setting all parameters, specifying those that are  fitted
+
 
 # Load the pomp information
-pomp_listr <- readRDS("./header/pomp_list.rds")
-state_index <- Sys.getenv("state_index") %>% as.integer()
-this_pomp <- pomp_listr[[state_index]]
+locname <- Sys.getenv("locname") 
 fdt <- Sys.getenv("fdt")
-
-locname <- this_pomp$location
 
 ## load version of data used in model fitting
 data_path <- file.path("archive", fdt, paste0(locname, ".csv"))
+
 mdata <- read_csv(
   data_path,
   col_types = cols_only(
@@ -64,10 +63,10 @@ mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time) %>%
   filter(time >= 1) # time 1 is used as t0 in makepompmodel()
 pdata_versioned <- mdata3
 
-this_pomp$pomp_data <- pdata_versioned
-n_knots <- round(nrow(this_pomp$pomp_data) / 21)
+n_knots <- round(nrow(pdata_versioned) / 21)
+knot_coefs <-  paste0("b", 1:n_knots)
 
-max_obs_date <- max(this_pomp$pomp_data$date)
+max_obs_date <- max(pdata_versioned$date)
 
 cdata <- mdata %>% filter(variable == "mobility_trend") %>% group_by(date) %>% 
   slice(1) %>% 
@@ -89,19 +88,55 @@ covar <- covariate_table(
   order = "constant"
 )
 
-this_pomp$pomp_covar <- covar
+# --------------------------------------------------
+# Specify parameters and initial state variables that were estimated
+# --------------------------------------------------
+
+est_these_pars = c("log_sigma_dw", "min_frac_dead", "max_frac_dead", "log_half_dead",
+                   "log_theta_cases", "log_theta_deaths")
+est_these_inivals = c("E1_0", "Ia1_0", "Isu1_0", "Isd1_0")
+
+state_pops <- readRDS("../data/us_popsize.rds")
+statedf <- state_pops %>% 
+  # R0 at beginning of epidemic for each state
+  dplyr::mutate(initR0 = dplyr::case_when(
+    state_full %in% c("New York") ~ 10, 
+    state_full %in% c("Illinois") ~ 8,
+    state_full %in% c("Indiana") ~ 6, 
+    state_full %in% c("Maryland") ~ 8,
+    state_full %in% c("Massachusetts") ~ 6,
+    state_full %in% c("New Jersey") ~ 6,
+    state_full %in% c("Ohio") ~ 6,
+    TRUE ~ 6 # default initial R0
+  ))
+
+
+# Set the parameter values and initial conditions
+par_var_list <- setparsvars_warm(iniparvals = "fresh", # list or "fresh"
+                                 est_these_pars = c(est_these_pars, knot_coefs), 
+                                 est_these_inivals = est_these_inivals,
+                                 population = statedf %>% 
+                                   filter(state_full == locname) %>% pull(total_pop),
+                                 n_knots = n_knots,
+                                 # set R0 at beginning of epidemic
+                                 rnaught = statedf %>% 
+                                   filter(state_full == locname) %>% pull(initR0))
+
+
 
 # Make the pomp model
-pomp_model <- makepompmodel(
-  par_var_list = this_pomp$par_var_list,
-  pomp_data = this_pomp$pomp_data,
-  pomp_covar = this_pomp$pomp_covar,
-  n_knots = n_knots
+pomp_res <- list(
+  pomp_model = makepompmodel(
+    par_var_list = par_var_list,
+    pomp_data = pdata_versioned,
+    pomp_covar = covar,
+    n_knots = n_knots
+  ),
+  pomp_data = pdata_versioned,
+  pomp_covar = covar,
+  location = locname,
+  par_var_list = par_var_list
 )
-this_pomp$pomp_model <- pomp_model
-
-pomp_res <- this_pomp #current state
-rm(this_pomp) #remove the old object
 
 # Run scenarios
 

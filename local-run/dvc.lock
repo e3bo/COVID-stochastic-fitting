@@ -22,3 +22,18 @@ archive-2020-11-16:
   outs:
   - path: archive/2020-11-16
     md5: 29d1d8c31aa1c46bf239a0fe19a78a93.dir
+simulate-2020-11-16:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-11-16 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+  - path: archive/2020-11-16
+    md5: 29d1d8c31aa1c46bf239a0fe19a78a93.dir
+  - path: weekly-forecast.R
+    md5: 4dce4f609a71c4f800eea72f97b3a97e
+  outs:
+  - path: weekly-forecast-simulations/2020-11-16
+    md5: 5502d1ce9c6a664235f9c5a7301d370e.dir

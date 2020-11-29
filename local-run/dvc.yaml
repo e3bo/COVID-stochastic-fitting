@@ -17,3 +17,13 @@ stages:
     - pull-current-output-from-date.R
     outs:
     - archive/2020-11-16
+  simulate-2020-11-16:
+    cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+      -e fdt=2020-11-16 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+    deps:
+    - ../code
+    - ../data/us_popsize.rds
+    - archive/2020-11-16
+    - weekly-forecast.R
+    outs:
+    - weekly-forecast-simulations/2020-11-16

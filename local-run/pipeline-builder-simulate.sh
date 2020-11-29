@@ -6,7 +6,7 @@ fdt="${fdt:-2020-11-16}"
 
 dvc run \
     -d ../code \
-    -d ./header \
+    -d ../data/us_popsize.rds \
     -d weekly-forecast.R \
     -d archive/$fdt \
     -o weekly-forecast-simulations/$fdt \
