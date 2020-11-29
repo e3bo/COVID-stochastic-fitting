@@ -10,3 +10,10 @@ stages:
     - ./weekly-forecast-prep.R
     outs:
     - header
+  archive-2020-11-16:
+    cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+      fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+    deps:
+    - pull-current-output-from-date.R
+    outs:
+    - archive/2020-11-16

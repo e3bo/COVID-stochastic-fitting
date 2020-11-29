@@ -13,3 +13,12 @@ make-header-dir:
   outs:
   - path: header
     md5: 27b5268316cbc3165f1fd5493dcddb68.dir
+archive-2020-11-16:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+  outs:
+  - path: archive/2020-11-16
+    md5: 29d1d8c31aa1c46bf239a0fe19a78a93.dir
