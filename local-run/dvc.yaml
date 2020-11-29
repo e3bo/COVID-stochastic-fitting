@@ -1,0 +1,12 @@
+stages:
+  make-header-dir:
+    cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+      -e DISABLE_AUTH=true -w /root/local-run --rm eamon/2020mif:v20201129 Rscript
+      ./weekly-forecast-prep.R
+    deps:
+    - ../code
+    - ../data
+    - ../output
+    - ./weekly-forecast-prep.R
+    outs:
+    - header
