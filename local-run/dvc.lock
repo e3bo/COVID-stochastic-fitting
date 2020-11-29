@@ -37,3 +37,18 @@ simulate-2020-11-16:
   outs:
   - path: weekly-forecast-simulations/2020-11-16
     md5: 5502d1ce9c6a664235f9c5a7301d370e.dir
+format-2020-11-16:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: cfa277dd97c61ad1180e6e2e39e9a4f6
+  - path: weekly-forecast-simulations/2020-11-16
+    md5: 5502d1ce9c6a664235f9c5a7301d370e.dir
+  outs:
+  - path: CEID-compart_mif_li/2020-11-16-CEID-compart_mif_li.csv
+    md5: 55577da51328255cd2cbcd9e2905a58c
+  - path: CEID-compart_mif_rn/2020-11-16-CEID-compart_mif_rn.csv
+    md5: 868cc0539f13b1e75f0701679df74026
+  - path: CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
+    md5: cd6e8fcbef2ba560f04f27fc67b5385a

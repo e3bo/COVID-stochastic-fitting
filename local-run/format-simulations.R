@@ -179,7 +179,7 @@ write_scenario_fcst <- function(fdt, stp){
     dir.create(dirname)
   }
   path <- file.path(dirname, fname)
-  write_csv(fcst, path = path)
+  write_csv(fcst, file = path)
 }
 
 fdt <- "2020-11-16"

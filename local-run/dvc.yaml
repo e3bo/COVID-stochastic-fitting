@@ -27,3 +27,13 @@ stages:
     - weekly-forecast.R
     outs:
     - weekly-forecast-simulations/2020-11-16
+  format-2020-11-16:
+    cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+      fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+    deps:
+    - format-simulations.R
+    - weekly-forecast-simulations/2020-11-16
+    outs:
+    - CEID-compart_mif_li/2020-11-16-CEID-compart_mif_li.csv
+    - CEID-compart_mif_rn/2020-11-16-CEID-compart_mif_rn.csv
+    - CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
