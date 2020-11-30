@@ -29,7 +29,7 @@ pull_cases <- function(x, h = c(1, 2)){
                      ahead = h)
 }
 
-cpred3 <- cpred2 %>% map(pull_cases)
+cpred3 <- cpred2[-5] %>% map(pull_cases)
 
 case_evals <- cpred3 %>% map(evaluate_predictions, backfill_buffer = 0)
 
@@ -50,9 +50,9 @@ add_ci <- function(p){
 }
 
 plot_measure(ci$h1, "ae") %>% add_ci()
-plot_measure(ci$h2, "wis") %>% add_ci()
-
 plot_measure(ci$h1, "wis") %>% add_ci()
+
+plot_measure(ci$h2, "ae") %>% add_ci()
 plot_measure(ci$h2, "wis") %>% add_ci()
 
 plot_width(ci$h1, levels = 0.9)

@@ -71,12 +71,12 @@ evalulate:
     size: 725932
     nfiles: 3
   - path: evaluate-forecasts.R
-    md5: 5ba9b6be36ec79882d83779b85c6a04f
-    size: 2492
+    md5: ee69d3bbc3c8af2a379f110f70a43b13
+    size: 2604
   outs:
   - path: evaluate-forecasts.html
-    md5: 5cad2c3557a4d96585de3175ef3ce4f9
-    size: 770408
+    md5: a6071e09cd3693bc93f1c51b810acf53
+    size: 1070200
 archive-2020-11-09:
   cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
     fdt=2020-11-09 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
