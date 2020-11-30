@@ -52,9 +52,9 @@ add_ci <- function(p){
 plot_measure(ci$h1, "ae") %>% add_ci()
 plot_measure(ci$h2, "wis") %>% add_ci()
 
-
 plot_measure(ci$h1, "wis") %>% add_ci()
 plot_measure(ci$h2, "wis") %>% add_ci()
+
 plot_width(ci$h1, levels = 0.9)
 plot_width(ci$h2, levels = 0.9)
 
@@ -63,20 +63,27 @@ map(ci$h1, plot_calibration)
 
 # death forecast evaluations
 
-esqs2 <- evalcast::evaluate_predictions(sqs[2], backfill_buffer = 0)
-elis2 <- evalcast::evaluate_predictions(lis[2], backfill_buffer = 0)
-erns2 <- evalcast::evaluate_predictions(rns[2], backfill_buffer = 0)
-erwf2 <- evaluate_predictions(srwf[2], backfill_buffer = 0)
-eutf <- evaluate_predictions(utf[1], backfill_buffer = 0)
-ecef2 <- evaluate_predictions(scef[2], backfill_buffer = 0)
+pull_deaths <- function(x, h = c(1, 2)){
+  filter_predictions(x, 
+                     response_signal = "deaths_incidence_num", 
+                     ahead = h)
+}
 
-ei2 <- evalcast:::intersect_locations(c(erwf2, esqs2, elis2, erns2, eutf, ecef2))
-plot_measure(ei2, "ae") %>% add_ci()
-plot_measure(ei2, "wis") %>% add_ci()
-plot_width(ei2)
-plot_calibration(ei2[[1]])
-plot_calibration(ei2[[2]])
-plot_calibration(ei2[[3]])
-plot_calibration(ei2[[4]])
-plot_calibration(ei2[[5]])
-plot_calibration(ei2[[6]])
+cpred4 <- cpred2 %>% map(pull_deaths)
+
+death_evals <- cpred4 %>% map(evaluate_predictions, backfill_buffer = 1)
+
+di <- list()
+di$h1 <- evalcast:::intersect_locations(map(death_evals, 1))
+di$h2 <- evalcast:::intersect_locations(map(death_evals, 2))
+
+plot_measure(di$h1, "ae") %>% add_ci()
+plot_measure(di$h1, "wis") %>% add_ci()
+
+plot_measure(di$h2, "ae") %>% add_ci()
+plot_measure(di$h2, "wis") %>% add_ci()
+
+plot_width(di$h1, levels = 0.9)
+plot_width(di$h2, levels = 0.9)
+
+map(di$h1, plot_calibration)
