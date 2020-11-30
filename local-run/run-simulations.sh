@@ -3,9 +3,15 @@
 set -e
 
 
-# Problem states: Florida Massachusetts Lousianna "Nebraska" "New Jersey" Washington
+#  Lousianna
 fdt="${fdt:-2020-11-16}"
 declare -a locs=(
+"Washington"
+"New Jersey"
+"Nebraska"
+"Louisana"
+"Massachusetts"
+"Florida"
 "Wisconsin"
 "West Virginia"
 "Wyoming"

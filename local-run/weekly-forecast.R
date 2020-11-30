@@ -30,7 +30,7 @@ source("../code/model-setup/makepompmodel.R") #generates the pomp model
 source("../code/model-setup/setparsvars_warm.R") #setting all parameters, specifying those that are  fitted
 
 
-# Load the pomp information
+# Load the forecast specification
 locname <- Sys.getenv("locname") 
 fdt <- Sys.getenv("fdt")
 
@@ -57,22 +57,23 @@ mdata2 <- mdata %>%
   bind_cols(hosps = NA_real_) %>%
   mutate(tmp = as.integer(date))
 
-origin <- mdata2$tmp[which(mdata2$date == "2020-03-24")] - 21 #using 2020-03-03 - 0 would seem more natural, but that date is not in all data sets
+origin <- min(mdata2$tmp) - 1 # using the earliest day of observation as day 1
 mdata2$time <- mdata2$tmp - origin %>% as.integer()
-mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time) %>% 
-  filter(time >= 1) # time 1 is used as t0 in makepompmodel()
+mdata3 <- mdata2 %>% select(date, location, cases, hosps, deaths, time)
 pdata_versioned <- mdata3
 
 n_knots <- round(nrow(pdata_versioned) / 21)
 knot_coefs <-  paste0("b", 1:n_knots)
 
+min_obs_date <- min(pdata_versioned$date)
 max_obs_date <- max(pdata_versioned$date)
 
 cdata <- mdata %>% filter(variable == "mobility_trend") %>% group_by(date) %>% 
   slice(1) %>% 
-  mutate(time = as.integer(date) - as.integer(as.Date("2020-03-03"))) %>%
-  filter(date <= max_obs_date) %>%
-  filter(time >= 1)
+  filter(date >= min_obs_date & date <= max_obs_date) %>%
+  mutate(tmp = as.integer(date) - origin)
+
+stopifnot(nrow(cdata) == nrow(pdata_versioned))
 
 covar <- covariate_table(
   t = pdata_versioned$time,
@@ -122,8 +123,6 @@ par_var_list <- setparsvars_warm(iniparvals = "fresh", # list or "fresh"
                                  rnaught = statedf %>% 
                                    filter(state_full == locname) %>% pull(initR0))
 
-
-
 # Make the pomp model
 pomp_res <- list(
   pomp_model = makepompmodel(
@@ -155,25 +154,13 @@ assumed_fitted <-
     "theta_cases",
     "theta_deaths",
     "sigma_dw",
-    "b1",
-    "b2",
-    "b3",
-    "b4",
-    "b5",
-    "b6",
-    "b7",
-    "b8",
-    "b9",
-    "b10",
-    "b11",
-    "b12",
+    knot_coefs,
     "E1_0",
     "Ia1_0",
     "Isu1_0",
     "Isd1_0"
   )
 stopifnot(isTRUE(setequal(rownames(pn2), assumed_fitted)))
-
 
 pn <- bind_rows(pn1, pn2) %>% select(-is_fitted) %>% t() %>%
   as_tibble() %>%
