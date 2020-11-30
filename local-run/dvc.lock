@@ -77,3 +77,62 @@ evalulate:
   - path: evaluate-forecasts.html
     md5: 0caeeabb9fdc78fafa80f55769cc8e81
     size: 759495
+archive-2020-11-09:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-09 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-11-09
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+simulate-2020-11-09:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-11-09 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-11-09
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-11-09
+    md5: c1c9865d9b3efe77dae2876a6c1c6fc1.dir
+    size: 355018166
+    nfiles: 50
+format-2020-11-09:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-09 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-11-09
+    md5: c1c9865d9b3efe77dae2876a6c1c6fc1.dir
+    size: 355018166
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-11-09-CEID-compart_mif_li.csv
+    md5: a6685bd2a9836509564e796c6d975d26
+    size: 306216
+  - path: CEID-compart_mif_rn/2020-11-09-CEID-compart_mif_rn.csv
+    md5: 547316ee30fa4ccdf774560986d6dfd1
+    size: 312196
+  - path: CEID-compart_mif_sq/2020-11-09-CEID-compart_mif_sq.csv
+    md5: bb3f11829fd57133f702d4869119d05e
+    size: 309997

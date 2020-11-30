@@ -182,7 +182,7 @@ write_scenario_fcst <- function(fdt, stp){
   write_csv(fcst, file = path)
 }
 
-fdt <- "2020-11-16"
+fdt <- Sys.getenv("fdt")
 write_scenario_fcst(fdt, stp = "status_quo")
 write_scenario_fcst(fdt, stp = "linear_increase_sd")
 write_scenario_fcst(fdt, stp = "return_normal")
