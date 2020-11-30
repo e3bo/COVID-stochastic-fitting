@@ -1,4 +1,6 @@
 library(evalcast)
+library(magrittr)
+library(ggplot2)
 
 sqs <- load_local_covidhub("CEID-compart_mif_sq")
 lis <- load_local_covidhub("CEID-compart_mif_li")
@@ -22,8 +24,18 @@ erwf <- evaluate_predictions(srwf[1], backfill_buffer = 0)
 
 
 ei <- evalcast:::intersect_locations(c(erwf, esqs, elis, erns, ecef))
-plot_measure(ei, "ae")
-plot_measure(ei, "wis")
+
+add_ci <- function(p){
+  # confidence interval for median calculated by `boxplot.stats`, idea from koshke at https://stackoverflow.com/a/8135865
+  
+  f <- function(x) {
+    ans <- boxplot.stats(x)
+    data.frame(ymin = ans$conf[1], ymax = ans$conf[2], y = ans$stat[3])
+  }
+  p + stat_summary(fun.data = f, geom = "crossbar", color = NA, fill = "skyblue", size = 5, alpha = 0.5, width = 0.75)
+}
+plot_measure(ei, "ae") %>% add_ci()
+plot_measure(ei, "wis") %>% add_ci()
 plot_width(ei)
 plot_calibration(ei[[1]])
 plot_calibration(ei[[2]])
@@ -41,8 +53,8 @@ eutf <- evaluate_predictions(utf[1], backfill_buffer = 0)
 ecef2 <- evaluate_predictions(scef[2], backfill_buffer = 0)
 
 ei2 <- evalcast:::intersect_locations(c(erwf2, esqs2, elis2, erns2, eutf, ecef2))
-plot_measure(ei2, "ae")
-plot_measure(ei2, "wis")
+plot_measure(ei2, "ae") %>% add_ci()
+plot_measure(ei2, "wis") %>% add_ci()
 plot_width(ei2)
 plot_calibration(ei2[[1]])
 plot_calibration(ei2[[2]])

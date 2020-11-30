@@ -71,9 +71,9 @@ evalulate:
     size: 365989
     nfiles: 2
   - path: evaluate-forecasts.R
-    md5: 2b003b02799ea5692505b1c1034d5e7f
-    size: 2010
+    md5: 5ba9b6be36ec79882d83779b85c6a04f
+    size: 2492
   outs:
   - path: evaluate-forecasts.html
-    md5: 26cdab66999e9d6444e313878d540571
-    size: 750271
+    md5: 7cd1727bd4b70c8652d5184bf0b195fe
+    size: 763763
