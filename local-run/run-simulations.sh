@@ -9,7 +9,7 @@ declare -a locs=(
 "Washington"
 "New Jersey"
 "Nebraska"
-"Louisana"
+"Louisiana"
 "Massachusetts"
 "Florida"
 "Wisconsin"
