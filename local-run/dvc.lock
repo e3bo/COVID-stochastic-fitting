@@ -1,18 +1,3 @@
-make-header-dir:
-  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
-    -e DISABLE_AUTH=true -w /root/local-run --rm eamon/2020mif:v20201129 Rscript ./weekly-forecast-prep.R
-  deps:
-  - path: ../code
-    md5: c68d18ce0c7c6c20bda37124603eef59.dir
-  - path: ../data
-    md5: 23fc890d54da6260a58e69df1217c122.dir
-  - path: ../output
-    md5: 9bfffaa129d61cf73a71252e0d428f16.dir
-  - path: ./weekly-forecast-prep.R
-    md5: b9e7a3a4ab21a9fbaddb8f95e6dccc50
-  outs:
-  - path: header
-    md5: 27b5268316cbc3165f1fd5493dcddb68.dir
 archive-2020-11-16:
   cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
     fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
