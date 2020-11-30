@@ -3,8 +3,12 @@
 set -e
 
 fdt="${fdt:-2020-11-16}"
-declare -a locs=("Minnesota" 
-                "Georgia"
+declare -a locs=(
+  "Alaska"
+  "Alabama"
+  "Arkansas"
+  "Minnesota" 
+  "Georgia"
                 )
                 
 for l in "${locs[@]}"; do

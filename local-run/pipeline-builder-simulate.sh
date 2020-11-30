@@ -8,6 +8,7 @@ dvc run \
     -d ../code \
     -d ../data/us_popsize.rds \
     -d weekly-forecast.R \
+    -d run-simulations.sh \
     -d archive/$fdt \
     -o weekly-forecast-simulations/$fdt \
     -n simulate-$fdt \

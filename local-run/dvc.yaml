@@ -24,6 +24,7 @@ stages:
     - ../code
     - ../data/us_popsize.rds
     - archive/2020-11-16
+    - run-simulations.sh
     - weekly-forecast.R
     outs:
     - weekly-forecast-simulations/2020-11-16
@@ -37,3 +38,13 @@ stages:
     - CEID-compart_mif_li/2020-11-16-CEID-compart_mif_li.csv
     - CEID-compart_mif_rn/2020-11-16-CEID-compart_mif_rn.csv
     - CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
+  evalulate:
+    cmd: 'podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root
+      -w /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
+    deps:
+    - CEID-compart_mif_li
+    - CEID-compart_mif_rn
+    - CEID-compart_mif_sq
+    - evaluate-forecasts.R
+    outs:
+    - evaluate-forecasts.html
