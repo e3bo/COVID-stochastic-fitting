@@ -23,16 +23,16 @@ simulate-2020-11-16:
     size: 106162324
     nfiles: 302
   - path: run-simulations.sh
-    md5: b6301c3323a35ed594710650aea8560a
-    size: 350
+    md5: b6c7991ca7bf56c083b40f0abf43dcf5
+    size: 791
   - path: weekly-forecast.R
     md5: 4dce4f609a71c4f800eea72f97b3a97e
     size: 6573
   outs:
   - path: weekly-forecast-simulations/2020-11-16
-    md5: 2afd802a34da6aee571f4ca776b4a8ac.dir
-    size: 75121840
-    nfiles: 11
+    md5: 911ca41d09e03a899f749124063a981f.dir
+    size: 279040511
+    nfiles: 44
 format-2020-11-16:
   cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
     fdt=2020-11-16 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
@@ -41,39 +41,39 @@ format-2020-11-16:
     md5: cfa277dd97c61ad1180e6e2e39e9a4f6
     size: 5151
   - path: weekly-forecast-simulations/2020-11-16
-    md5: 2afd802a34da6aee571f4ca776b4a8ac.dir
-    size: 75121840
-    nfiles: 11
+    md5: 911ca41d09e03a899f749124063a981f.dir
+    size: 279040511
+    nfiles: 44
   outs:
   - path: CEID-compart_mif_li/2020-11-16-CEID-compart_mif_li.csv
-    md5: 899379faf9442e0790e39f6d593f122e
-    size: 90950
+    md5: c0f5945e4d781205af44ef88373c2b40
+    size: 364572
   - path: CEID-compart_mif_rn/2020-11-16-CEID-compart_mif_rn.csv
-    md5: 5305cfb68af0bcdd9a53af9176c6dd76
-    size: 91641
+    md5: 904449509986fe3c54d1deb4d05bb504
+    size: 367124
   - path: CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
-    md5: 2089d7b03e117b98fbc893b376b90c7f
-    size: 91164
+    md5: 185222756bce04c986dbcf388e19e501
+    size: 365953
 evalulate:
   cmd: 'podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -w
     /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
   deps:
   - path: CEID-compart_mif_li
-    md5: c0b5b75458a9f9738a4d505e04238a6b.dir
-    size: 90986
+    md5: e0e506c804a63d3b85fd72f4e909d5af.dir
+    size: 364608
     nfiles: 2
   - path: CEID-compart_mif_rn
-    md5: 9432ab6468f3d5436b08f1c2329002ff.dir
-    size: 91677
+    md5: dfed281bf67ca184b22ee68c4805f65c.dir
+    size: 367160
     nfiles: 2
   - path: CEID-compart_mif_sq
-    md5: 6c1b6f20c2013f9b38169745b0dd3649.dir
-    size: 91200
+    md5: 0a3062a271849a86ae6c262ec45d8f6c.dir
+    size: 365989
     nfiles: 2
   - path: evaluate-forecasts.R
     md5: 2b003b02799ea5692505b1c1034d5e7f
     size: 2010
   outs:
   - path: evaluate-forecasts.html
-    md5: 0206c2b7dd064c333dd2675758996cc3
-    size: 716898
+    md5: 26cdab66999e9d6444e313878d540571
+    size: 750271
