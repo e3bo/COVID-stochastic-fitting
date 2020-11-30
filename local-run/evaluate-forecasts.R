@@ -1,47 +1,65 @@
 library(evalcast)
 library(magrittr)
 library(ggplot2)
+library(purrr)
 
-sqs <- load_local_covidhub("CEID-compart_mif_sq")
-lis <- load_local_covidhub("CEID-compart_mif_li")
-rns <- load_local_covidhub("CEID-compart_mif_rn")
+# collect prediction cards
+cpred <- list()
+cpred$sqs <- load_local_covidhub("CEID-compart_mif_sq")
+cpred$lis <- load_local_covidhub("CEID-compart_mif_li")
+cpred$rns <- load_local_covidhub("CEID-compart_mif_rn")
 
-rwf <- evalcast::get_covidhub_predictions("CEID-Walk", 
-                                          forecast_dates = "2020-11-16")
-utf <- evalcast::get_covidhub_predictions("UT-Mobility",
-                                          forecast_dates = "2020-11-16")
-cef <- evalcast::get_covidhub_predictions("COVIDhub-ensemble",
-                                          forecast_dates = "2020-11-16")
-scef <- filter_predictions(cef, geo_type = "state")
-srwf <- filter_predictions(rwf, geo_type = "state")
+fdts <- map(cpred[[1]], attr, "forecast_date") %>% 
+  map_chr(as.character) %>% unique()
+
+cpred$rwf <- get_covidhub_predictions("CEID-Walk",
+                                      forecast_dates = fdts)
+cpred$utf <- get_covidhub_predictions("UT-Mobility",
+                                          forecast_dates = fdts)
+cpred$cef <- get_covidhub_predictions("COVIDhub-ensemble",
+                                          forecast_dates = fdts)
+
+cpred2 <- map(cpred, filter_predictions, geo_type = "state")
+
 
 # case forecast evaluations
-esqs <- evalcast::evaluate_predictions(sqs[1], backfill_buffer = 0)
-elis <- evalcast::evaluate_predictions(lis[1], backfill_buffer = 0)
-erns <- evalcast::evaluate_predictions(rns[1], backfill_buffer = 0)
-ecef <- evaluate_predictions(scef[1], backfill_buffer = 0)
-erwf <- evaluate_predictions(srwf[1], backfill_buffer = 0)
+pull_cases <- function(x, h = c(1, 2)){
+  filter_predictions(x, 
+                     response_signal = "confirmed_incidence_num", 
+                     ahead = h)
+}
 
+cpred3 <- cpred2 %>% map(pull_cases)
 
-ei <- evalcast:::intersect_locations(c(erwf, esqs, elis, erns, ecef))
+case_evals <- cpred3 %>% map(evaluate_predictions, backfill_buffer = 0)
+
+ci <- list()
+ci$h1 <- evalcast:::intersect_locations(map(case_evals, 1))
+ci$h2 <- evalcast:::intersect_locations(map(case_evals, 2))
 
 add_ci <- function(p){
-  # confidence interval for median calculated by `boxplot.stats`, idea from koshke at https://stackoverflow.com/a/8135865
+  # confidence interval for median calculated by `boxplot.stats`
+  # idea from koshke at https://stackoverflow.com/a/8135865
   
   f <- function(x) {
     ans <- boxplot.stats(x)
     data.frame(ymin = ans$conf[1], ymax = ans$conf[2], y = ans$stat[3])
   }
-  p + stat_summary(fun.data = f, geom = "crossbar", color = NA, fill = "skyblue", size = 5, alpha = 0.5, width = 0.75)
+  p + stat_summary(fun.data = f, geom = "crossbar", color = NA, 
+                   fill = "skyblue", size = 5, alpha = 0.5, width = 0.75)
 }
-plot_measure(ei, "ae") %>% add_ci()
-plot_measure(ei, "wis") %>% add_ci()
-plot_width(ei)
-plot_calibration(ei[[1]])
-plot_calibration(ei[[2]])
-plot_calibration(ei[[3]])
-plot_calibration(ei[[4]])
-plot_calibration(ei[[5]])
+
+plot_measure(ci$h1, "ae") %>% add_ci()
+plot_measure(ci$h2, "wis") %>% add_ci()
+
+
+plot_measure(ci$h1, "wis") %>% add_ci()
+plot_measure(ci$h2, "wis") %>% add_ci()
+plot_width(ci$h1, levels = 0.9)
+plot_width(ci$h2, levels = 0.9)
+
+map(ci$h1, plot_calibration)
+
 
 # death forecast evaluations
 
