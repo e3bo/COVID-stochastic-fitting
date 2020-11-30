@@ -46,26 +46,26 @@ format-2020-11-16:
   - path: format-simulations.R
     md5: cfa277dd97c61ad1180e6e2e39e9a4f6
   - path: weekly-forecast-simulations/2020-11-16
-    md5: 5502d1ce9c6a664235f9c5a7301d370e.dir
+    md5: 8d11c292faceaffac18112655a4af67e.dir
   outs:
   - path: CEID-compart_mif_li/2020-11-16-CEID-compart_mif_li.csv
-    md5: 55577da51328255cd2cbcd9e2905a58c
+    md5: 299a1809dea8936ee1e40d4c09073dd0
   - path: CEID-compart_mif_rn/2020-11-16-CEID-compart_mif_rn.csv
-    md5: 868cc0539f13b1e75f0701679df74026
+    md5: fca191cf47f7f304048942132ba9bd5c
   - path: CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
-    md5: cd6e8fcbef2ba560f04f27fc67b5385a
+    md5: 9acf11b7e7e92821c8f2131f17d9a36a
 evalulate:
   cmd: 'podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -w
     /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
   deps:
   - path: CEID-compart_mif_li
-    md5: b72a3b96e8ef31c8d4be78a5e32bb8a7.dir
+    md5: 458bfeb451775dd1aef248f84520daf2.dir
   - path: CEID-compart_mif_rn
-    md5: 9c5c5de4396b28ae2981ce711df18ff4.dir
+    md5: 27135c04157714382e7b40e916250641.dir
   - path: CEID-compart_mif_sq
-    md5: 298c9bde5096ee56a3d1b1294a7d704e.dir
+    md5: 0c4894d6ff0a7a9a7775a8e193263b77.dir
   - path: evaluate-forecasts.R
     md5: 2b003b02799ea5692505b1c1034d5e7f
   outs:
   - path: evaluate-forecasts.html
-    md5: 767623d58105f8951e9b98b2d00f1985
+    md5: cd5a9effad0546838db61b48adce158b
