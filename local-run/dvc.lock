@@ -4,6 +4,7 @@ archive-2020-11-16:
   deps:
   - path: pull-current-output-from-date.R
     md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
   outs:
   - path: archive/2020-11-16
     md5: 29d1d8c31aa1c46bf239a0fe19a78a93.dir
@@ -59,24 +60,24 @@ evalulate:
     /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
   deps:
   - path: CEID-compart_mif_li
-    md5: af5f1dd3956d7dcf39654daceed1aae1.dir
-    size: 720539
-    nfiles: 3
+    md5: d8cdc44be33cea4e50c6c214c0ef402d.dir
+    size: 3584542
+    nfiles: 10
   - path: CEID-compart_mif_rn
-    md5: 6e8260c35576422bfdb566c9407b1bc9.dir
-    size: 729358
-    nfiles: 3
+    md5: 3a27edff8ddf1e860ca83906c86c56e0.dir
+    size: 3616028
+    nfiles: 10
   - path: CEID-compart_mif_sq
-    md5: e38d1f2a3e049920356331c9afc711a7.dir
-    size: 725932
-    nfiles: 3
+    md5: a11e83e7c39ee9995bd14ad382c7d0e6.dir
+    size: 3604845
+    nfiles: 10
   - path: evaluate-forecasts.R
-    md5: ee69d3bbc3c8af2a379f110f70a43b13
-    size: 2604
+    md5: 48189fc0f8a64612c4f0632228ac860d
+    size: 2771
   outs:
   - path: evaluate-forecasts.html
-    md5: a6071e09cd3693bc93f1c51b810acf53
-    size: 1070200
+    md5: ee795503abb57d27b1e3a62d6d7d6de1
+    size: 2088564
 archive-2020-11-09:
   cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
     fdt=2020-11-09 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
@@ -136,3 +137,428 @@ format-2020-11-09:
   - path: CEID-compart_mif_sq/2020-11-09-CEID-compart_mif_sq.csv
     md5: bb3f11829fd57133f702d4869119d05e
     size: 309997
+archive-2020-11-02:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-02 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-11-02
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+simulate-2020-11-02:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-11-02 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-11-02
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-11-02
+    md5: 1bb75180c1c87b8633dfbc5a86f378ce.dir
+    size: 355571903
+    nfiles: 50
+format-2020-11-02:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-11-02 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-11-02
+    md5: 1bb75180c1c87b8633dfbc5a86f378ce.dir
+    size: 355571903
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-11-02-CEID-compart_mif_li.csv
+    md5: dfe9f5ab87d56ecf63e63dec0f1d30e6
+    size: 409108
+  - path: CEID-compart_mif_rn/2020-11-02-CEID-compart_mif_rn.csv
+    md5: e729f47b905dbdb45bec40d8eb7894f1
+    size: 415477
+  - path: CEID-compart_mif_sq/2020-11-02-CEID-compart_mif_sq.csv
+    md5: 30642d4729cf7ba9f2ac32591085caef
+    size: 413053
+archive-2020-10-26:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-26 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-10-26
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+simulate-2020-10-26:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-10-26 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-10-26
+    md5: 58fb4b21bf257ed2ea3af03610df3839.dir
+    size: 49468352
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-10-26
+    md5: d5e6cb1cfbe8ccfa2d16b22b7d8dcb23.dir
+    size: 356379647
+    nfiles: 50
+archive-2020-10-19:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-19 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-10-19
+    md5: 6506a744d0a166bb07b4d4a7b11d2c5b.dir
+    size: 48411634
+    nfiles: 151
+simulate-2020-10-19:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-10-19 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-10-19
+    md5: 6506a744d0a166bb07b4d4a7b11d2c5b.dir
+    size: 48411634
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-10-19
+    md5: 6f5cce3d95cade3e06f7704f4d5a55bd.dir
+    size: 317650808
+    nfiles: 50
+archive-2020-10-12:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-12 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-10-12
+    md5: 1abc63dbdcca8a1b357cd7ba8a7e69c8.dir
+    size: 47186794
+    nfiles: 151
+simulate-2020-10-12:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-10-12 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-10-12
+    md5: 1abc63dbdcca8a1b357cd7ba8a7e69c8.dir
+    size: 47186794
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-10-12
+    md5: 8f38ec2a72b9c838fc144407249b88ee.dir
+    size: 380920193
+    nfiles: 50
+archive-2020-10-05:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-05 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-10-05
+    md5: e8b431bd39fc789ecc83713f13f236fc.dir
+    size: 45876415
+    nfiles: 151
+simulate-2020-10-05:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-10-05 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-10-05
+    md5: e8b431bd39fc789ecc83713f13f236fc.dir
+    size: 45876415
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-10-05
+    md5: 084c4484f503e42c2df8828ad8eca027.dir
+    size: 346364354
+    nfiles: 50
+archive-2020-09-28:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-09-28 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-09-28
+    md5: faef14855cc8f18a6301e58104781d3b.dir
+    size: 44347667
+    nfiles: 151
+simulate-2020-09-28:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-09-28 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-09-28
+    md5: faef14855cc8f18a6301e58104781d3b.dir
+    size: 44347667
+    nfiles: 151
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-09-28
+    md5: 63bd115cc858722f537526f0558e4da0.dir
+    size: 350627638
+    nfiles: 50
+archive-2020-09-21:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-09-21 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-09-21
+    md5: f82e2c82e1b85ea4eb0595cbc3e61f30.dir
+    size: 43348688
+    nfiles: 150
+simulate-2020-09-21:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run/..:/root
+    -e fdt=2020-09-21 -w /root/local-run --rm eamon/2020mif:v20201129 bash -x ./run-simulations.sh
+  deps:
+  - path: ../code
+    md5: c68d18ce0c7c6c20bda37124603eef59.dir
+    size: 6503470
+    nfiles: 43
+  - path: ../data/us_popsize.rds
+    md5: c5f327f08ee2d93a94d9d5cd50fd3a5f
+    size: 1061
+  - path: archive/2020-09-21
+    md5: f82e2c82e1b85ea4eb0595cbc3e61f30.dir
+    size: 43348688
+    nfiles: 150
+  - path: run-simulations.sh
+    md5: d2e7f01c4505cf8b618637c779483050
+    size: 794
+  - path: weekly-forecast.R
+    md5: 336079da741b66a257d80532e070cda5
+    size: 6396
+  outs:
+  - path: weekly-forecast-simulations/2020-09-21
+    md5: 9f041af790c5d3b3380994de359a8115.dir
+    size: 298799738
+    nfiles: 50
+archive-2020-09-14:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-09-14 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
+  deps:
+  - path: pull-current-output-from-date.R
+    md5: 0339128f413f1e51e764fdfee40bf3de
+    size: 784
+  outs:
+  - path: archive/2020-09-14
+    md5: 172c8eb5c204fb83bce153aeac766a34.dir
+    size: 77142697
+    nfiles: 247
+format-2020-10-26:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-26 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-10-26
+    md5: d5e6cb1cfbe8ccfa2d16b22b7d8dcb23.dir
+    size: 356379647
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-10-26-CEID-compart_mif_li.csv
+    md5: 8ddb5bdde550a43281c0da990b1d5d4b
+    size: 410633
+  - path: CEID-compart_mif_rn/2020-10-26-CEID-compart_mif_rn.csv
+    md5: 89ca4f8fad291de3e5fc8e9ff4bdb2ea
+    size: 413880
+  - path: CEID-compart_mif_sq/2020-10-26-CEID-compart_mif_sq.csv
+    md5: 26c31712dfef6949a31b9abb76eccf14
+    size: 412796
+format-2020-10-19:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-19 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-10-19
+    md5: 6f5cce3d95cade3e06f7704f4d5a55bd.dir
+    size: 317650808
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-10-19-CEID-compart_mif_li.csv
+    md5: 49decad1ff3acb8e2e04ff8c2daea37a
+    size: 409516
+  - path: CEID-compart_mif_rn/2020-10-19-CEID-compart_mif_rn.csv
+    md5: 0e79c7383da26507cfa3aa6f34a13419
+    size: 412482
+  - path: CEID-compart_mif_sq/2020-10-19-CEID-compart_mif_sq.csv
+    md5: 7c3f6c17f7b3652f081372db85036f0d
+    size: 411462
+format-2020-10-12:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-12 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-10-12
+    md5: 8f38ec2a72b9c838fc144407249b88ee.dir
+    size: 380920193
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-10-12-CEID-compart_mif_li.csv
+    md5: 40d598001be3fdd4288098b99c3227d4
+    size: 409386
+  - path: CEID-compart_mif_rn/2020-10-12-CEID-compart_mif_rn.csv
+    md5: 56998153ad6c9aaa1fad9f33393ec23a
+    size: 411835
+  - path: CEID-compart_mif_sq/2020-10-12-CEID-compart_mif_sq.csv
+    md5: 4a5aaf47a5aadc7a4a462ccb27a37d7c
+    size: 411201
+format-2020-10-05:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-10-05 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-10-05
+    md5: 084c4484f503e42c2df8828ad8eca027.dir
+    size: 346364354
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-10-05-CEID-compart_mif_li.csv
+    md5: 26e3f7275862a6d44b97a262fb1c5038
+    size: 408573
+  - path: CEID-compart_mif_rn/2020-10-05-CEID-compart_mif_rn.csv
+    md5: ebe92a5c8e3661153f5b9bdc80ab3a04
+    size: 411289
+  - path: CEID-compart_mif_sq/2020-10-05-CEID-compart_mif_sq.csv
+    md5: cd1c1394b9c6a5b2aa159950cce6fd6a
+    size: 410489
+format-2020-09-28:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-09-28 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-09-28
+    md5: 63bd115cc858722f537526f0558e4da0.dir
+    size: 350627638
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-09-28-CEID-compart_mif_li.csv
+    md5: d21d794ee7d8c2f7c37f5f6c63864863
+    size: 408080
+  - path: CEID-compart_mif_rn/2020-09-28-CEID-compart_mif_rn.csv
+    md5: 4a2699a6e4c2c5247072abd45dae959e
+    size: 410767
+  - path: CEID-compart_mif_sq/2020-09-28-CEID-compart_mif_sq.csv
+    md5: 5b47084e764b5474e50520463fb94f81
+    size: 409766
+format-2020-09-21:
+  cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
+    fdt=2020-09-21 -w /root --rm eamon/2020mif:v20201129 ./format-simulations.R
+  deps:
+  - path: format-simulations.R
+    md5: 3d73acbd4b2b759d52bd3ae0549ca110
+    size: 5156
+  - path: weekly-forecast-simulations/2020-09-21
+    md5: 9f041af790c5d3b3380994de359a8115.dir
+    size: 298799738
+    nfiles: 50
+  outs:
+  - path: CEID-compart_mif_li/2020-09-21-CEID-compart_mif_li.csv
+    md5: 0ce39507abb6bdb33f575bc964cc920b
+    size: 408455
+  - path: CEID-compart_mif_rn/2020-09-21-CEID-compart_mif_rn.csv
+    md5: 0e81b02a11823ae70d84f513e4174ffb
+    size: 410688
+  - path: CEID-compart_mif_sq/2020-09-21-CEID-compart_mif_sq.csv
+    md5: e907479e6e81c705717c5d223808219c
+    size: 409894

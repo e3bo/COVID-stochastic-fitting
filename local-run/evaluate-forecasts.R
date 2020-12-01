@@ -12,8 +12,11 @@ cpred$rns <- load_local_covidhub("CEID-compart_mif_rn")
 fdts <- map(cpred[[1]], attr, "forecast_date") %>% 
   map_chr(as.character) %>% unique()
 
+fdtsrw <- c(paste0("2020-11-", c("16", "09", "01")),
+            paste0("2020-10-", c("25", "18", "11", "04")),
+            paste0("2020-09-", c("27", "20", "13")))
 cpred$rwf <- get_covidhub_predictions("CEID-Walk",
-                                      forecast_dates = fdts)
+                                      forecast_dates = fdtsrw)
 cpred$utf <- get_covidhub_predictions("UT-Mobility",
                                           forecast_dates = fdts)
 cpred$cef <- get_covidhub_predictions("COVIDhub-ensemble",
