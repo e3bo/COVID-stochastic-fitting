@@ -17,7 +17,7 @@ tidyverse \
 vctrs \
 xml2
 
-RUN installGithub.r e3bo/covidcast/R-packages/evalcast@4765fd2
+RUN installGithub.r e3bo/covidcast/R-packages/evalcast@b5af206
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --fix-missing \

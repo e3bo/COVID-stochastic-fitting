@@ -14,7 +14,7 @@ fdts <- map(cpred[[1]], attr, "forecast_date") %>%
 
 fdtsrw <- c(paste0("2020-11-", c("16", "09", "01")),
             paste0("2020-10-", c("25", "18", "11", "04")),
-            paste0("2020-09-", c("27", "20", "13")))
+            paste0("2020-09-", c("27", "20")))
 cpred$rwf <- get_covidhub_predictions("CEID-Walk",
                                       forecast_dates = fdtsrw)
 cpred$utf <- get_covidhub_predictions("UT-Mobility",
@@ -90,3 +90,10 @@ plot_width(di$h1, levels = 0.9)
 plot_width(di$h2, levels = 0.9)
 
 map(di$h1, plot_calibration)
+
+## regression modeling
+
+dih1_df <- dplyr::bind_rows(di$h1, .id = "forecaster")
+dih1_m <- lme4::lmer(log(wis + 1) ~ forecaster + (1|location) + (1|end), data = dih1_df)
+dih1_ci <- confint(dih1_m)
+
