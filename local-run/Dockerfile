@@ -6,6 +6,7 @@ doParallel \
 dplyr \
 ggplot2 \
 here \
+lme4 \
 lubridate \
 pomp \
 pomp \
@@ -17,8 +18,7 @@ tidyverse \
 vctrs \
 xml2
 
-RUN installGithub.r e3bo/covidcast/R-packages/evalcast@7d45f30
-
+RUN installGithub.r e3bo/covidcast/R-packages/evalcast@93e56fd  
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --fix-missing \
         subversion

@@ -8,6 +8,8 @@ dvc run \
     -d CEID-compart_mif_sq \
     -d evaluate-forecasts.R \
     -o evaluate-forecasts.html \
+    -o case-trajectories.png \
+    -o death-trajectories.png \
     -n evaluate \
     --force \
     podman run -v "$PWD":/root -w /root --rm eamon/2020mif:v20201129 'Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '

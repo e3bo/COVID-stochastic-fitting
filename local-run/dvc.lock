@@ -55,29 +55,6 @@ format-2020-11-16:
   - path: CEID-compart_mif_sq/2020-11-16-CEID-compart_mif_sq.csv
     md5: c539dd01d41a07eb38e656becb2d2b24
     size: 415863
-evalulate:
-  cmd: 'podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -w
-    /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
-  deps:
-  - path: CEID-compart_mif_li
-    md5: d8cdc44be33cea4e50c6c214c0ef402d.dir
-    size: 3584542
-    nfiles: 10
-  - path: CEID-compart_mif_rn
-    md5: 3a27edff8ddf1e860ca83906c86c56e0.dir
-    size: 3616028
-    nfiles: 10
-  - path: CEID-compart_mif_sq
-    md5: a11e83e7c39ee9995bd14ad382c7d0e6.dir
-    size: 3604845
-    nfiles: 10
-  - path: evaluate-forecasts.R
-    md5: 1342979ba58aa49cd97a6023d9ba9956
-    size: 2765
-  outs:
-  - path: evaluate-forecasts.html
-    md5: 1a8829f2009e1d79ec02cd6c25300181
-    size: 2025421
 archive-2020-11-09:
   cmd: podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -e
     fdt=2020-11-09 -w /root --rm eamon/2020mif:v20201129 ./pull-current-output-from-date.R
@@ -562,3 +539,32 @@ format-2020-09-21:
   - path: CEID-compart_mif_sq/2020-09-21-CEID-compart_mif_sq.csv
     md5: e907479e6e81c705717c5d223808219c
     size: 409894
+evaluate:
+  cmd: 'podman run -v /home/ebodea/src/COVID-stochastic-fitting/local-run:/root -w
+    /root --rm eamon/2020mif:v20201129 Rscript -e "knitr::spin(\"evaluate-forecasts.R\")" '
+  deps:
+  - path: CEID-compart_mif_li
+    md5: d8cdc44be33cea4e50c6c214c0ef402d.dir
+    size: 3584542
+    nfiles: 10
+  - path: CEID-compart_mif_rn
+    md5: 3a27edff8ddf1e860ca83906c86c56e0.dir
+    size: 3616028
+    nfiles: 10
+  - path: CEID-compart_mif_sq
+    md5: a11e83e7c39ee9995bd14ad382c7d0e6.dir
+    size: 3604845
+    nfiles: 10
+  - path: evaluate-forecasts.R
+    md5: 624c58563bcb145c877ddf6724565e2a
+    size: 4765
+  outs:
+  - path: case-trajectories.png
+    md5: 7bd5c2b831d5a0ee354779057385aa74
+    size: 1945214
+  - path: death-trajectories.png
+    md5: c95e7203ae482aa39f043bc3bad56c21
+    size: 2285377
+  - path: evaluate-forecasts.html
+    md5: ff3acd0528554aef579a93d10ad45a43
+    size: 2435512

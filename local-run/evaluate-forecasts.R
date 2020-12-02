@@ -1,3 +1,4 @@
+library(dplyr)
 library(evalcast)
 library(magrittr)
 library(ggplot2)
@@ -24,6 +25,28 @@ cpred$cef <- get_covidhub_predictions("COVIDhub-ensemble",
 
 cpred2 <- map(cpred, filter_predictions, geo_type = "state")
 
+## trajectory_plots
+
+sqselc <- cpred$sqs %>% 
+  filter_predictions(response_signal = "confirmed_incidence_num", 
+                     ahead = c(1, 2))
+rwselc <- cpred$rwf %>% 
+  filter_predictions(response_signal = "confirmed_incidence_num", 
+                     geo_type = "state", ahead = c(1, 2))
+
+evalcast:::intersect_locations(c(sqselc, rwselc)) %>% 
+  plot_trajectory(first_day = "2020-09-06")
+ggsave("case-trajectories.png", width = 27, height = 18)
+
+sqsel <- cpred$sqs %>% 
+  filter_predictions(response_signal = "deaths_incidence_num", ahead = c(1, 2))
+rwsel <- cpred$rwf %>% 
+  filter_predictions(response_signal = "deaths_incidence_num", 
+                     geo_type = "state", ahead = c(1, 2))
+
+evalcast:::intersect_locations(c(sqsel, rwsel)) %>% 
+  plot_trajectory(first_day = "2020-09-06")
+ggsave("death-trajectories.png", width = 27, height = 18)
 
 # case forecast evaluations
 pull_cases <- function(x, h = c(1, 2)){
@@ -49,7 +72,8 @@ add_ci <- function(p){
     data.frame(ymin = ans$conf[1], ymax = ans$conf[2], y = ans$stat[3])
   }
   p + stat_summary(fun.data = f, geom = "crossbar", color = NA, 
-                   fill = "skyblue", size = 5, alpha = 0.5, width = 0.75)
+                   fill = "skyblue", size = 5, alpha = 0.5, width = 0.75) + 
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 }
 
 plot_measure(ci$h1, "ae") %>% add_ci()
@@ -58,11 +82,28 @@ plot_measure(ci$h1, "wis") %>% add_ci()
 plot_measure(ci$h2, "ae") %>% add_ci()
 plot_measure(ci$h2, "wis") %>% add_ci()
 
+my_dotplot <- function(sc, err_name = "wis"){
+  nm <- attr(sc, "name_of_forecaster")
+  rsp <- attr(sc, "response")$signal
+  sc2 <- sc %>% mutate(location = covidcast::fips_to_abbr(location))
+  ordered_levels <- sc2 %>% group_by(.data$location) %>% 
+    summarize(avg_err = mean(.data[[err_name]])) %>% 
+    arrange(.data$avg_err)
+  sc2$location <- factor(sc2$location, levels = ordered_levels$location)
+
+  sc2 %>% ggplot(aes(x = wis, y = location)) + geom_point(alpha = 0.5) + 
+    scale_x_continuous(trans = "log1p") + 
+    ggtitle(nm, subtitle = rsp) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+}
+
+my_dotplot(ci$h1[[1]], "wis")
+my_dotplot(ci$h1[[4]], "wis")
+  
 plot_width(ci$h1, levels = 0.9)
 plot_width(ci$h2, levels = 0.9)
 
 map(ci$h1, plot_calibration)
-
 
 # death forecast evaluations
 
@@ -86,6 +127,9 @@ plot_measure(di$h1, "wis") %>% add_ci()
 plot_measure(di$h2, "ae") %>% add_ci()
 plot_measure(di$h2, "wis") %>% add_ci()
 
+my_dotplot(di$h1[[1]], "wis")
+my_dotplot(di$h1[[4]], "wis")
+
 plot_width(di$h1, levels = 0.9)
 plot_width(di$h2, levels = 0.9)
 
@@ -93,7 +137,14 @@ map(di$h1, plot_calibration)
 
 ## regression modeling
 
-dih1_df <- dplyr::bind_rows(di$h1, .id = "forecaster")
-dih1_m <- lme4::lmer(log(wis + 1) ~ forecaster + (1|location) + (1|end), data = dih1_df)
-dih1_ci <- confint(dih1_m)
+fit_mod <- function(sc){
+  df <- dplyr::bind_rows(sc, .id = "forecaster")
+  m <- lme4::lmer(log(wis + 1) ~ forecaster + (1|location) + (1|end), data = df)
+  ci <- confint(m)
+  list(model = m, conf = ci)  
+}
+
+(di_mods <- map(di, fit_mod))
+(ci_mods <- map(ci, fit_mod))
+
 
