@@ -255,7 +255,19 @@ foo <- al$scenarios$sims %>% filter(rep_id == "1-1") %>% slice(1:237) %>%
   filter(time <= 195) %>%
   mutate(Itotal = Ia1 + Ia2 + Ia3 + Ia4 + Isu1 + Isu2 + Isu3 + Isu4 + Isd1 + Isd2 + Isd3 + Isd4)
 
-gamma <- exp(foo$trendO) / (1 + exp(foo$trendO))
+
+
+basis <- t(al$pomp_covar@table[c("seas_1", "seas_2", "seas_3", "seas_4", "seas_5", "seas_6", "seas_7", "seas_8", "seas_9"),]) 
+
+spline_pars <- as.numeric(al$all_partable[1, c("b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9")])
+
+trend00 <- as.numeric(basis %*% spline_pars)
+
+basis %*% spline_pars
+
+gamma1 <- exp(foo$trendO) / (1 + exp(foo$trendO))
+gamma <- exp(trend00)/ (1 + exp(trend00))
+
 
 rel_beta_change <- al$pomp_model@covar@table[1,]
 delta <- rel_beta_change * gamma
@@ -333,6 +345,11 @@ R_e <- S * omega * (
     + a * b_I_a / gamma_I_a 
   )
 
-plot(R_e)
+{par(mfrow = c(2, 1))
+plot(foo$time, R_e)
+abline(h = 1)
+plot(foo$time, foo$cases)
+}
+
 
 ```
