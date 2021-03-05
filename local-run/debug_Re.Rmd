@@ -6,7 +6,7 @@ author: Eric Marty
   
 ```{r setup, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(include=TRUE, echo=FALSE, warning=FALSE, message=FALSE, out.width = "100%")
-library(here)
+#library(here)
 library(tidyverse)
 ```
 
@@ -349,6 +349,110 @@ R_e <- S * omega * (
 plot(foo$time, R_e)
 abline(h = 1)
 plot(foo$time, foo$cases)
+}
+
+
+```
+```{r}
+
+setwd("work/local-run/weekly-forecast-simulations/2020-09-21/")
+az <- readRDS("Arizona.rds")
+
+foo2 <- az$scenarios$sims %>% filter(rep_id == "1-1") %>% slice(1:237) %>% 
+  filter(time <= 195) %>%
+  mutate(Itotal = Ia1 + Ia2 + Ia3 + Ia4 + Isu1 + Isu2 + Isu3 + Isu4 + Isd1 + Isd2 + Isd3 + Isd4)
+
+
+
+basis2 <- t(az$pomp_covar@table[c("seas_1", "seas_2", "seas_3", "seas_4", "seas_5", "seas_6", "seas_7", "seas_8", "seas_9"),1:195]) 
+
+spline_pars2 <- as.numeric(az$all_partable[1, c("b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9")])
+
+trend002 <- as.numeric(basis2 %*% spline_pars2)
+
+gamma2 <- exp(trend002)/ (1 + exp(trend002))
+
+
+rel_beta_change2 <- az$pomp_model@covar@table[1,1:195]
+delta2 <- rel_beta_change2 * gamma2
+delta2 <- ifelse(delta2 > 1, 1, delta2)
+beta2 <- exp(az$all_partable$log_beta_s[1]) * delta2
+
+## Check value of all fixed parameters for consistency with supplement
+all(round(1 / (1 + exp(az$all_partable$trans_e)), 3) == 0.119)
+all(round(1 / (1 + exp(az$all_partable$trans_a)), 3) == 0.500)
+all(round(1 / (1 + exp(az$all_partable$trans_c)), 3) == 0.269)
+all(round(1 / (1 + exp(az$all_partable$trans_h)), 7) == 4.54e-5)
+
+all(round(exp(az$all_partable$log_max_diag), 1) == 1) # supplement says 2
+all(round(exp(az$all_partable$log_diag_inc_rate), 2) == 1.1)
+all(round(exp(az$all_partable$log_half_diag)) == 30)
+
+all(round(az$all_partable$max_detect_par, 1) == 0.4)
+all(round(exp(az$all_partable$log_detect_inc_rate), 2) == 1.1)
+all(round(exp(az$all_partable$log_half_detect)) == 30)
+all(round(exp(az$all_partable$base_detect_frac), 1) == 0.1)
+
+all(round(1 / (1 + exp(az$all_partable$frac_asym)), 3) == 0.182)
+all(round(1 / (1 + exp(az$all_partable$frac_hosp)), 3) == 0.119)
+
+all(round(exp(az$all_partable$log_g_e)) == 1)
+all(round(exp(az$all_partable$log_g_c)) == 1) ## 4 days when s=1, supplement says 3 days
+all(round(exp(az$all_partable$log_g_h)) == 1) ## 4 days, supplement says 6 days
+all(round(exp(az$all_partable$log_g_a)) == 1) ## 4 days, supplement says 3.5 days
+all(round(exp(az$all_partable$log_g_sd)) == 1) ## 4 days when s = 1, supplement says 3 days 
+all(round(exp(az$all_partable$log_g_su)) == 1) ## 4 days, supplement says 6 days
+
+detect_frac <- function(t){
+with(az$all_partable[1,], 1/(1+exp(max_detect_par)) * (t ^ exp(log_detect_inc_rate))  / ( (exp(log_half_detect) ^ exp(log_detect_inc_rate)) + (t ^ exp(log_detect_inc_rate))) + exp(base_detect_frac))
+}
+
+diag_rate <- function(t){
+  with(az$all_partable[1,], 
+       1 + exp(log_max_diag)  *  (t ^ exp(log_diag_inc_rate)) / ((exp(log_half_diag) ^ exp(log_diag_inc_rate))  + (t ^ exp(log_diag_inc_rate))))
+}
+
+{plot(foo2$time, detect_frac(foo2$time))
+abline(v=30)
+abline(h=.3)}
+
+plot(foo2$time, diag_rate(foo2$time))
+
+S <- foo2$S
+omega <- beta2
+b_L <- 0.5
+gamma_L <- 0.25
+a <- 0.182
+q <- detect_frac(foo2$time)
+b_I_sd <- 1
+b_I_su <- 1
+s <- diag_rate(foo2$time)
+gamma_I_sd <- .25
+gamma_C <- .25
+gamma_H <- .25
+gamma_I_su <- .25
+gamma_I_a <- .25
+b_I_a <- 0.5
+b_C <- .269
+b_H <- 4.54e-5
+h <- 0.119
+
+R_e <- S * omega * (
+    b_L / gamma_L +  (1 - a) * (
+      q * ( 
+        b_I_sd / (s * gamma_I_sd) 
+        + b_C * s / gamma_C 
+        + h * b_H / gamma_H 
+      )
+      + (1 - q) * b_I_su / gamma_I_su
+    ) 
+    + a * b_I_a / gamma_I_a 
+  )
+
+{par(mfrow = c(2, 1))
+plot(foo2$time, R_e)
+abline(h = 1)
+plot(foo2$time, foo2$cases)
 }
 
 
